@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+/* Tailwind v4: use .dark class (set by next-themes) instead of media query */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── UX4G Design System 2.0 — Token Registration ─────────────────────────── */
+/* Maps CSS custom properties as Tailwind v4 utility tokens                   */
+
+@theme inline {
+  /* Color tokens */
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  /* UX4G typography token — Noto Sans (mandated for all gov products) */
+  --font-sans: var(--font-noto-sans, "Noto Sans", ui-sans-serif, system-ui, sans-serif);
+
+  /* UX4G border radius scale */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 24px;
+}
+
+/* ── Light theme — UX4G-aligned palette ──────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* ── Brand accent scale — Government Blue by default ──────────────────
+     * Override --brand-* via JS (BrandProvider / applyBrandScale) to change
+     * the accent throughout the app. All --primary, --ring, and Tailwind
+     * bg-blue-* / text-blue-* utilities derive from these variables.        */
+    --brand-50:  214 100% 97%;
+    --brand-100: 214 95%  93%;
+    --brand-200: 213 97%  87%;
+    --brand-300: 212 96%  78%;
+    --brand-400: 213 94%  68%;
+    --brand-500: 217 91%  60%;
+    --brand-600: 221 83%  53%;
+    --brand-700: 224 76%  48%;
+    --brand-800: 226 71%  40%;
+    --brand-900: 224 64%  33%;
+    --brand-950: 226 57%  21%;
+
+    /* Primary-button foreground — overridden for Amber (needs dark text) */
+    --primary-foreground-light: 0 0% 100%;
+
+    /* Core surfaces */
+    --background:             hsl(0 0% 100%);
+    --foreground:             hsl(220 26% 14%);
+
+    /* Card & popover */
+    --card:                   hsl(0 0% 100%);
+    --card-foreground:        hsl(220 26% 14%);
+    --popover:                hsl(0 0% 100%);
+    --popover-foreground:     hsl(220 26% 14%);
+
+    /* Primary — derived from brand accent (WCAG AA: 4.8:1 on white) */
+    --primary:                hsl(var(--brand-600));
+    --primary-foreground:     hsl(var(--primary-foreground-light));
+
+    /* Secondary / muted surfaces */
+    --secondary:              hsl(218 33% 96%);
+    --secondary-foreground:   hsl(220 26% 14%);
+    --muted:                  hsl(218 33% 96%);
+    --muted-foreground:       hsl(220 13% 46%);
+
+    /* Accent surface + foreground */
+    --accent:                 hsl(218 33% 95%);
+    --accent-foreground:      hsl(var(--brand-700));
+
+    /* Destructive — WCAG AA compliant red (intentionally fixed, not brand) */
+    --destructive:            hsl(0 78% 47%);
+    --destructive-foreground: hsl(0 0% 100%);
+
+    /* Borders & inputs */
+    --border:                 hsl(220 20% 88%);
+    --input:                  hsl(220 20% 88%);
+    --ring:                   hsl(var(--brand-600));
+    --radius:                 0.5rem;
+
+    /* Chart palette — chart-1 follows brand; chart-2..5 are fixed semantic */
+    --chart-1:                hsl(var(--brand-600));
+    --chart-2:                hsl(160 60% 38%);
+    --chart-3:                hsl(30 82% 52%);
+    --chart-4:                hsl(280 62% 52%);
+    --chart-5:                hsl(340 72% 50%);
+  }
+
+  /* ── Dark theme ──────────────────────────────────────────────────────────── */
+  .dark {
+    /* Core surfaces */
+    --background:             hsl(222 28% 9%);
+    --foreground:             hsl(213 27% 94%);
+
+    /* Card & popover */
+    --card:                   hsl(222 24% 12%);
+    --card-foreground:        hsl(213 27% 94%);
+    --popover:                hsl(222 24% 12%);
+    --popover-foreground:     hsl(213 27% 94%);
+
+    /* Primary — brand-400 (lighter shade for legibility on dark bg) */
+    --primary:                hsl(var(--brand-400));
+    --primary-foreground:     hsl(222 28% 9%);
+
+    /* Secondary / muted */
+    --secondary:              hsl(220 22% 18%);
+    --secondary-foreground:   hsl(213 27% 94%);
+    --muted:                  hsl(220 22% 18%);
+    --muted-foreground:       hsl(218 14% 60%);
+
+    /* Accent surface + foreground */
+    --accent:                 hsl(220 22% 20%);
+    --accent-foreground:      hsl(var(--brand-300));
+
+    /* Destructive */
+    --destructive:            hsl(0 68% 58%);
+    --destructive-foreground: hsl(0 0% 100%);
+
+    /* Borders & inputs */
+    --border:                 hsl(220 18% 20%);
+    --input:                  hsl(220 18% 20%);
+    --ring:                   hsl(var(--brand-400));
+
+    /* Chart palette */
+    --chart-1:                hsl(var(--brand-400));
+    --chart-2:                hsl(160 55% 48%);
+    --chart-3:                hsl(30 78% 58%);
+    --chart-4:                hsl(280 58% 62%);
+    --chart-5:                hsl(340 68% 58%);
+  }
+}
+
+/* ── Base layer — UX4G global defaults ───────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* UX4G heading scale */
+  h1 { font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-weight: 600; }
+  h3 { font-weight: 600; }
+
+  /* WCAG 2.4.7 — visible focus indicator for keyboard users */
+  :focus-visible {
+    outline: 2px solid hsl(var(--brand-600));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .dark :focus-visible {
+    outline-color: hsl(var(--brand-400));
+  }
+}
+
+/* ── Skip to main content link — WCAG 2.4.1 bypass blocks ─────────────── */
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1.25rem;
+  background: hsl(var(--brand-600));
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0.5rem;
+  text-decoration: none;
+  transition: top 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ── Custom scrollbar — refined for long operational sessions ─────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 78%);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 15% 65%);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(220 18% 30%);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 18% 40%);
+}
+
+/* ── Table improvements — UX4G operational density ───────────────────── */
+
+.table-operational th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: hsl(218 33% 96%);
+}
+.dark .table-operational th {
+  background: hsl(220 22% 18%);
+}
+
+/* ── Animation tokens ─────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.18s ease-out forwards;
+}
+
+/* ── IIMS Assistant trigger animations ────────────────────────────────── */
+/* GPU-accelerated; uses --brand-* CSS variables for theme-aware coloring. */
+
+/* Idle breathing glow ring — appears behind the trigger button */
+@keyframes chat-pulse-ring {
+  0%   { background-color: hsl(var(--brand-600) / 0.08); transform: scale(1);    }
+  50%  { background-color: hsl(var(--brand-600) / 0.14); transform: scale(1.06); }
+  100% { background-color: hsl(var(--brand-600) / 0.08); transform: scale(1);    }
+}
+.dark .chat-pulse-ring-el {
+  /* Slightly brighter in dark mode */
+  animation-name: chat-pulse-ring-dark;
+}
+@keyframes chat-pulse-ring-dark {
+  0%   { background-color: hsl(var(--brand-400) / 0.10); transform: scale(1);    }
+  50%  { background-color: hsl(var(--brand-400) / 0.18); transform: scale(1.06); }
+  100% { background-color: hsl(var(--brand-400) / 0.10); transform: scale(1);    }
+}
+
+/* Notification badge heartbeat — draws attention to pending items */
+@keyframes chat-notif-pop {
+  0%, 100% { transform: scale(1);   }
+  8%        { transform: scale(1.22); }
+  16%       { transform: scale(1);   }
+  24%       { transform: scale(1.12); }
+  32%       { transform: scale(1);   }
+}
+
+/* Online status dot — gentle breathe */
+@keyframes chat-online-glow {
+  0%, 100% { opacity: 0.75; transform: scale(1);    }
+  50%       { opacity: 1;    transform: scale(1.3);  }
+}
+
+/* Processing arc spin — thin rotating ring when bot is typing */
+@keyframes chat-spin {
+  to { transform: rotate(360deg); }
+}
