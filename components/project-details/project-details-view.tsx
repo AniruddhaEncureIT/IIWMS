@@ -1473,7 +1473,7 @@ export function ProjectDetailsView({ projectId }: Props) {
                         {entry.performedBy} · {fmtDate(entry.performedAt)}
                       </p>
                       {entry.remarks && (
-                        <p className="text-xs text-gray-400 italic mt-1 leading-relaxed">"{entry.remarks}"</p>
+                        <p className="text-xs text-gray-400 italic mt-1 leading-relaxed">&quot;{entry.remarks}&quot;</p>
                       )}
                       <div className="flex items-center gap-1 mt-1">
                         <span className="text-xs text-gray-300 dark:text-gray-600 truncate">{entry.fromStatus}</span>

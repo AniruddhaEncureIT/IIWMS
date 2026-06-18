@@ -269,7 +269,7 @@ export function ActivityTimeline({ entries }: { entries: HistoryEntry[] }) {
               {h.performedBy} · {h.performedAt}
             </p>
             {h.remarks && (
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 italic mt-0.5 truncate">"{h.remarks}"</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 italic mt-0.5 truncate">&quot;{h.remarks}&quot;</p>
             )}
           </div>
         </li>

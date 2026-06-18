@@ -227,7 +227,7 @@ function LogoUploadSection() {
 
       <div className="px-6 pb-4 text-xs text-gray-400 space-y-1">
         <p>· PNG, JPG or SVG · Max 2 MB · Recommended: 300 × 80 px or wider</p>
-        <p>· Uploaded logos replace the IIMS defaults — use "Revert to IIMS Default" to restore them</p>
+        <p>· Uploaded logos replace the IIMS defaults — use &quot;Revert to IIMS Default&quot; to restore them</p>
         <p>· Changes apply to the header and login screen immediately</p>
       </div>
     </div>

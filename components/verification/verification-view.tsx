@@ -630,7 +630,7 @@ export function VerificationView({ projectId }: { projectId: string }) {
                       <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{entry.action}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{entry.performedBy} · {fmtDate(entry.performedAt)}</p>
                       {entry.remarks && (
-                        <p className="text-xs text-gray-400 italic mt-1">"{entry.remarks}"</p>
+                        <p className="text-xs text-gray-400 italic mt-1">&quot;{entry.remarks}&quot;</p>
                       )}
                       <div className="flex items-center gap-1 mt-1 text-xs text-gray-300 dark:text-gray-600">
                         <span className="truncate">{entry.fromStatus}</span>

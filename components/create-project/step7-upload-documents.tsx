@@ -170,7 +170,7 @@ function UploadZone({ zone, files, onAdd, onRemove, error }: UploadZoneProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{file.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{formatBytes(file.size)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{file.size !== undefined ? formatBytes(file.size) : "—"}</p>
                 </div>
                 <button
                   type="button"

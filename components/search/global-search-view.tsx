@@ -278,7 +278,7 @@ export function GlobalSearchView() {
     }
   }
 
-  function useRecent(q: string) {
+  function setRecentQuery(q: string) {
     setQuery(q);
     inputRef.current?.focus();
   }
@@ -363,7 +363,7 @@ export function GlobalSearchView() {
                 </div>
                 <div className="space-y-1">
                   {recent.map((q) => (
-                    <button key={q} onClick={() => useRecent(q)}
+                    <button key={q} onClick={() => setRecentQuery(q)}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left group">
                       <Clock className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 shrink-0" aria-hidden="true" />
                       <span className="text-sm text-gray-700 dark:text-gray-200 flex-1 truncate">{q}</span>
@@ -395,7 +395,7 @@ export function GlobalSearchView() {
                           <p className="text-xs text-gray-400 mt-0.5">
                             {meta.examples.map((ex, i) => (
                               <span key={ex}>
-                                <button onClick={() => useRecent(ex)}
+                                <button onClick={() => setRecentQuery(ex)}
                                   className="text-blue-500 dark:text-blue-400 hover:underline font-mono">{ex}</button>
                                 {i < meta.examples.length - 1 ? ", " : ""}
                               </span>

@@ -107,7 +107,7 @@ function DeleteDialog({ draft, onConfirm, onCancel }: DeleteDialogProps) {
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Are you sure you want to delete{" "}
               <span className="font-medium text-gray-700 dark:text-gray-300">
-                "{draft.projectName || "Untitled Project"}"
+                &quot;{draft.projectName || "Untitled Project"}&quot;
               </span>
               ? This cannot be undone.
             </p>

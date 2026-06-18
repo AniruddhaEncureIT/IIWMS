@@ -951,7 +951,7 @@ function ActivityLogsTab() {
                     <p className="text-xs text-gray-400 mt-0.5">Status → <span className="font-medium text-gray-600 dark:text-gray-300">{ev.toStatus}</span></p>
                   )}
                   {ev.remarks && (
-                    <p className="text-xs text-gray-400 mt-0.5 italic">"{ev.remarks}"</p>
+                    <p className="text-xs text-gray-400 mt-0.5 italic">&quot;{ev.remarks}&quot;</p>
                   )}
                 </div>
               </div>

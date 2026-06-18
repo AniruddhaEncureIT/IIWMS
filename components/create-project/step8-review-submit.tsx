@@ -139,12 +139,14 @@ export function Step8ReviewSubmit({ state, activeCharges, onVerificationChange, 
               <button
                 type="button"
                 onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = b.workDemandByDocumentFile.url;
-                  link.download = b.workDemandByDocumentFile.name;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                  if (b.workDemandByDocumentFile) {
+                    const link = document.createElement("a");
+                    link.href = b.workDemandByDocumentFile.url;
+                    link.download = b.workDemandByDocumentFile.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
                 }}
                 className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg text-blue-600 dark:text-blue-400 transition-colors flex-shrink-0"
                 aria-label="Download document"

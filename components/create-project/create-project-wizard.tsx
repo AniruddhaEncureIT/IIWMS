@@ -7,7 +7,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Save, Send, Check, Sparkles } fro
 import Link from "next/link";
 
 import { store } from "@/store/iims.store";
-import type { ICharge } from "@/types/iims.types";
+import type { ICharge, IDocument } from "@/types/iims.types";
 
 import { Step1CreateProject } from "./step1-create-project";
 import { Step2SubWork } from "./step2-sub-work";
@@ -348,7 +348,7 @@ export function CreateProjectWizard() {
     const chargeTotal = appliedCharges.reduce((s, c) => s + (totalAmount * c.percentage) / 100, 0);
 
     // Convert UploadedFile to IDocument format
-    const convertToDoc = (file: any) => ({
+    const convertToDoc = (file: UploadedFile): IDocument => ({
       id: file.id,
       name: file.name,
       type: file.type,

@@ -22,6 +22,7 @@ export interface UploadedFile {
   name: string;
   type: string;
   url: string;
+  size?: number;
 }
 
 export interface SubWorkItem {
@@ -74,14 +75,6 @@ export interface GeneralDescription {
   technicalNotes: string;
   siteConditions: string;
   specialClauses: string;
-}
-
-export interface UploadedFile {
-  id: string;
-  name: string;
-  size: number;
-  url: string;
-  type: string;
 }
 
 // Categorised upload buckets for Step 7
