@@ -93,6 +93,7 @@ export const ROUTE_ROLES = {
     "Deputy Engineer",
     "Executive Engineer",
     "Tender Clerk",
+    "Chief Accounts and Finance Officer",
   ] as UserRole[],
 
   technicalBid: [
@@ -119,6 +120,7 @@ export const ROUTE_ROLES = {
     "Deputy Engineer",
     "Executive Engineer",
     "Tender Clerk",
+    "Chief Accounts and Finance Officer",
   ] as UserRole[],
 
   // Work Order detail — EE issues; DE/SE/TC can view; Contractor receives it
