@@ -27,9 +27,11 @@ class AuthService {
     // But NOT tokens — they stay ONLY in HTTP-only cookies
     store.set(STORAGE_KEYS.AUTH_USER, user);
 
-    // Set token in HTTP-only cookie (not readable by JS — prevents XSS)
-    // Middleware verifies this cookie server-side
-    document.cookie = `${STORAGE_KEYS.AUTH_TOKEN}=${tokens.accessToken}; path=/; max-age=${60 * 60 * 8}; SameSite=Lax; Secure; HttpOnly`;
+    // Set token in cookie (verified by middleware server-side)
+    // Note: HttpOnly flag can only be set by server, not JavaScript
+    const isProduction = process.env.NODE_ENV === "production";
+    const secure = isProduction ? "; Secure" : "";
+    document.cookie = `${STORAGE_KEYS.AUTH_TOKEN}=${tokens.accessToken}; path=/; max-age=${60 * 60 * 8}; SameSite=Lax${secure}`;
 
     return { user, tokens };
   }
@@ -45,7 +47,7 @@ class AuthService {
     store.remove(STORAGE_KEYS.AUTH_TOKEN);
 
     // Expire auth cookie immediately (session ends)
-    document.cookie = `${STORAGE_KEYS.AUTH_TOKEN}=; path=/; max-age=0; SameSite=Lax; Secure`;
+    document.cookie = `${STORAGE_KEYS.AUTH_TOKEN}=; path=/; max-age=0; SameSite=Lax`;
 
     // Clear legacy localStorage key
     if (typeof window !== "undefined") {
