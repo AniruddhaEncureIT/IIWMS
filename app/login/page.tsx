@@ -215,8 +215,10 @@ function LoginForm() {
           description: session?.user.role,
         });
 
+        // Navigate to dashboard (or callback URL) and wait for navigation to complete
         const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-        router.replace(callbackUrl);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay to ensure state is settled
+        router.push(callbackUrl);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Invalid credentials. Please check your email and password."
