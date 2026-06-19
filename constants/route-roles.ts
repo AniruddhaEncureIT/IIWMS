@@ -142,6 +142,8 @@ export const ROUTE_ROLES = {
     "Accountant",
     "Assistant Accounts Officer",
     "Chief Accounts and Finance Officer",
+    "Additional Chief Executive Officer",
+    "Chief Executive Officer",
   ] as UserRole[],
 
   // Detail: adds Contractor (views/accepts their own MB)
@@ -153,6 +155,8 @@ export const ROUTE_ROLES = {
     "Accountant",
     "Assistant Accounts Officer",
     "Chief Accounts and Finance Officer",
+    "Additional Chief Executive Officer",
+    "Chief Executive Officer",
     "Contractor",
   ] as UserRole[],
 
