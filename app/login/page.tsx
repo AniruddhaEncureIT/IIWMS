@@ -215,10 +215,11 @@ function LoginForm() {
           description: session?.user.role,
         });
 
-        // Navigate to dashboard (or callback URL) and wait for navigation to complete
+        // Hard redirect — forces middleware to re-evaluate the new auth cookie.
+        // Soft navigation (router.push) skips middleware and leaves the page stale.
         const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-        await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay to ensure state is settled
-        router.push(callbackUrl);
+        await new Promise(resolve => setTimeout(resolve, 600)); // let toast render
+        window.location.href = callbackUrl;
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Invalid credentials. Please check your email and password."

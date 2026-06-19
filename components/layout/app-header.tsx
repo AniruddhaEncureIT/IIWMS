@@ -131,7 +131,9 @@ export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = fal
     setUserOpen(false);
     await logout();
     toast.success("Signed out successfully.");
-    router.push("/login");
+    // Hard redirect — forces full page reload so middleware re-evaluates
+    // the cleared cookie. Soft navigation leaves stale auth state.
+    window.location.href = "/login";
   };
 
   const handleSearch = (e: { preventDefault(): void }) => {

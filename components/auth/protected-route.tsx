@@ -19,16 +19,17 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.replace(ROUTES.LOGIN);
+      // Hard redirect so middleware re-evaluates cleared cookie
+      window.location.href = ROUTES.LOGIN;
       return;
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      router.replace(ROUTES.UNAUTHORIZED);
+      window.location.href = ROUTES.UNAUTHORIZED;
     }
-  }, [isAuthenticated, isLoading, user, allowedRoles, router]);
+  }, [isAuthenticated, isLoading, user, allowedRoles]);
 
-  // Show loading spinner during auth check, redirect, or role validation
+  // Show spinner while loading or redirecting
   if (isLoading || !isAuthenticated || (allowedRoles && user && !allowedRoles.includes(user.role))) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-900">
