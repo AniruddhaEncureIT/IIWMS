@@ -53,18 +53,10 @@ class AuthService {
   }
 
   async refreshAuth(): Promise<{ user: User; tokens: AuthTokens } | null> {
-    // Middleware handles token refresh via cookies
-    // Just check if user is still stored in localStorage
+    // Middleware handles token refresh via cookies.
+    // Check if user is still stored in localStorage — if so, session is valid.
     const user = store.get<User>(STORAGE_KEYS.AUTH_USER);
     if (!user) return null;
-
-    // Notify backend to refresh tokens (sets new cookie)
-    try {
-      await this.repo.logout().catch(() => undefined);
-    } catch {
-      // Token might be expired, logout will handle cleanup
-      return null;
-    }
 
     return {
       user,
