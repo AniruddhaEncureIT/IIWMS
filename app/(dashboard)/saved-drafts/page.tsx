@@ -479,7 +479,11 @@ function SavedDraftsContent() {
   function submitDraft(draft: IProject) {
     setPreviewDraft(null);
     if (!confirm(`Submit "${draft.projectName || "this draft"}" for verification? It will move to the approval workflow.`)) return;
-    store.submitDraft(draft.id);
+    const result = store.submitDraft(draft.id);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Project submitted for verification!", {
       description: `${draft.projectName || "Project"} is now pending at Deputy Engineer.`,
     });

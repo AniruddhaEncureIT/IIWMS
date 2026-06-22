@@ -37,9 +37,6 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    // Notify backend
-    await this.repo.logout().catch(() => undefined);
-
     // Clear user from localStorage
     store.remove(STORAGE_KEYS.AUTH_USER);
 

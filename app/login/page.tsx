@@ -217,8 +217,9 @@ function LoginForm() {
 
         // Hard redirect — forces middleware to re-evaluate the new auth cookie.
         // Soft navigation (router.push) skips middleware and leaves the page stale.
-        const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-        await new Promise(resolve => setTimeout(resolve, 600)); // let toast render
+        const raw = searchParams.get("callbackUrl") ?? "/dashboard";
+        const callbackUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+        await new Promise(resolve => setTimeout(resolve, 200)); // let toast render
         window.location.href = callbackUrl;
       } catch (err) {
         toast.error(

@@ -585,7 +585,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
         label: "Approve LOI",
         actionType: "approve",
         requiresRemarks: true,
-        nextStageId: "stage-20",
+        nextStageId: "stage-19b",
         nextOwnerRole: "Tender Clerk",
       },
       {
@@ -595,6 +595,26 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
         requiresRemarks: true,
         nextStageId: "stage-18",
         nextOwnerRole: "Chief Accounts and Finance Officer",
+      },
+    ],
+  },
+
+  // ── STAGE 19b: Work Order - TC Preparation ─────────────────────────────
+  {
+    id: "stage-19b",
+    stageNumber: 20,
+    name: "Work Order - TC Preparation",
+    ownerRole: "Tender Clerk",
+    status: "Work Order - TC Preparation",
+    description: "TC prepares Work Order document for EE review",
+    possibleActions: [
+      {
+        id: "tc-submit-wo-to-ee",
+        label: "Submit Work Order to Executive Engineer",
+        actionType: "submit",
+        requiresRemarks: false,
+        nextStageId: "stage-20",
+        nextOwnerRole: "Executive Engineer",
       },
     ],
   },
@@ -621,7 +641,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
         label: "Return to TC",
         actionType: "reject",
         requiresRemarks: true,
-        nextStageId: "stage-20",
+        nextStageId: "stage-19b",
         nextOwnerRole: "Tender Clerk",
       },
     ],
@@ -1156,8 +1176,8 @@ export function validateMBVerify(callerRole: string, currentStatus: string): Act
   if (callerRole !== "Deputy Engineer") {
     return { ok: false, error: `Only Deputy Engineer can verify measurement books.` };
   }
-  if (currentStatus !== "Submitted to DE") {
-    return { ok: false, error: `MB status must be "Submitted to DE" to verify.` };
+  if (currentStatus !== "Pending Measurement Verification") {
+    return { ok: false, error: `MB status must be "Pending Measurement Verification" to verify.` };
   }
   return { ok: true };
 }
@@ -1166,8 +1186,8 @@ export function validateMBApprove(callerRole: string, currentStatus: string): Ac
   if (callerRole !== "Executive Engineer") {
     return { ok: false, error: `Only Executive Engineer can approve measurement books.` };
   }
-  if (currentStatus !== "Verified by DE") {
-    return { ok: false, error: `MB status must be "Verified by DE" to approve.` };
+  if (currentStatus !== "Pending Measurement Approval") {
+    return { ok: false, error: `MB status must be "Pending Measurement Approval" to approve.` };
   }
   return { ok: true };
 }

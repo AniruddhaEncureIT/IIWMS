@@ -36,7 +36,10 @@ class Store {
   private ensureSeeded(): void {
     if (this.seeded || typeof window === "undefined") return;
     this.seeded = true;
-    if (!this.read<IUser[]>(KEYS.USERS)) this.write(KEYS.USERS, SEED_USERS);
+    if (!this.read<IUser[]>(KEYS.USERS)) {
+      // Strip passwords — auth is handled by auth.service; passwords must not persist to localStorage
+      this.write(KEYS.USERS, SEED_USERS.map(({ password: _pw, ...u }) => ({ ...u, password: "" })));
+    }
 
     // Always merge seed projects so new fields (e.g. documentSets, draftData)
     // added to SEED_PROJECTS are applied even when localStorage already has data.
@@ -311,15 +314,26 @@ class Store {
     if (p?.status === "Draft") this.deleteProject(id);
   }
 
-  submitDraft(id: string): void {
+  submitDraft(id: string): ActionResult {
     const p = this.getProjectById(id);
-    if (!p || p.status !== "Draft") return;
+    if (!p) return { ok: false, error: `Project "${id}" not found.` };
+    if (p.status !== "Draft") return { ok: false, error: "Only Draft projects can be submitted." };
+
     const user = this.getCurrentUser();
+    if (!user) return { ok: false, error: "No authenticated user." };
+    if (user.role !== "Sectional Engineer") {
+      return { ok: false, error: "Only Sectional Engineer can submit draft projects." };
+    }
+
+    const validation = validateForward(user.role, p.status, "Deputy Engineer");
+    if (!validation.ok) return validation;
+
     const newStatus = "Pending at Deputy Engineer";
     this.addHistory(id, {
       action: "Draft Submitted for Verification",
-      performedBy: user?.name ?? "Unknown",
+      performedBy: user.name,
       performedAt: new Date().toISOString(),
+      remarks: "",
       fromStatus: "Draft",
       toStatus: newStatus,
     });
@@ -327,6 +341,7 @@ class Store {
       status: newStatus,
       currentStage: "Deputy Engineer Verification",
     });
+    return { ok: true };
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────
@@ -342,15 +357,16 @@ class Store {
 
   createUser(data: Partial<IUser>): IUser {
     const users = this.getAllUsers();
+    const { password: _pw, ...safeData } = data;
     const user: IUser = {
       id: `USR${Date.now()}`,
       email: "",
-      password: "",
+      password: "",  // never stored
       role: "",
       name: "",
       status: "Active",
       division: "Pune Division",
-      ...data,
+      ...safeData,
     };
     this.write(KEYS.USERS, [...users, user]);
     return user;
