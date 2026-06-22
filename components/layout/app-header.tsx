@@ -29,6 +29,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useNotifications, type INotification } from "@/hooks/use-notifications";
 import { ChatTrigger } from "./floating-chat";
+import { loadLogo } from "@/lib/logo-storage";
 
 const LANGUAGES = [
   { code: "en", label: "EN", full: "English" },
@@ -86,8 +87,8 @@ export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = fal
 
   useEffect(() => {
     setMounted(true);
-    setOrgLogoLight(localStorage.getItem("iims_org_logo"));
-    setOrgLogoDark(localStorage.getItem("iims_org_logo_dark"));
+    loadLogo("iims_org_logo").then(setOrgLogoLight);
+    loadLogo("iims_org_logo_dark").then(setOrgLogoDark);
     function onStorage(e: StorageEvent) {
       if (e.key === "iims_org_logo")      setOrgLogoLight(e.newValue);
       if (e.key === "iims_org_logo_dark") setOrgLogoDark(e.newValue);

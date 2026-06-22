@@ -5,6 +5,7 @@ import { Settings, Upload, Image as ImageIcon, X, Check, Save, AlertCircle, Sun,
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { applyBrandScale } from "@/lib/brand";
+import { saveLogo, loadLogo, removeLogo } from "@/lib/logo-storage";
 
 // ─── Persistence keys ──────────────────────────────────────────────────────────
 
@@ -56,18 +57,8 @@ function saveConfig(cfg: GeneralConfig) {
 }
 
 
-function loadLogo(key = LS_LOGO_KEY): string | null {
-  try { return localStorage.getItem(key); } catch { return null; }
-}
-
-function saveLogoKey(key: string, dataUrl: string) {
-  localStorage.setItem(key, dataUrl);
-  window.dispatchEvent(new StorageEvent("storage", { key, newValue: dataUrl }));
-}
-
-function removeLogoKey(key: string) {
-  localStorage.removeItem(key);
-  window.dispatchEvent(new StorageEvent("storage", { key, newValue: null }));
+function dispatchLogoEvent(key: string, value: string | null) {
+  window.dispatchEvent(new StorageEvent("storage", { key, newValue: value }));
 }
 
 // ─── Single logo slot ──────────────────────────────────────────────────────────
@@ -90,7 +81,7 @@ function LogoSlot({ storageKey, label, bgClass, defaultSrc }: LogoSlotProps) {
   const [error,     setError]     = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setCustomUrl(loadLogo(storageKey)); }, [storageKey]);
+  useEffect(() => { loadLogo(storageKey).then(setCustomUrl); }, [storageKey]);
 
   // Always display something — custom upload takes precedence; IIMS default is the fallback
   const displayUrl = customUrl ?? defaultSrc;
@@ -111,9 +102,10 @@ function LogoSlot({ storageKey, label, bgClass, defaultSrc }: LogoSlotProps) {
     setError(null);
     setUploading(true);
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
-      saveLogoKey(storageKey, dataUrl);
+      await saveLogo(storageKey, dataUrl);
+      dispatchLogoEvent(storageKey, dataUrl);
       setCustomUrl(dataUrl);
       setUploading(false);
       toast.success(`${label} custom logo uploaded.`);
@@ -135,8 +127,9 @@ function LogoSlot({ storageKey, label, bgClass, defaultSrc }: LogoSlotProps) {
     if (file) processFile(file);
   }
 
-  function revertToDefault() {
-    removeLogoKey(storageKey);
+  async function revertToDefault() {
+    await removeLogo(storageKey);
+    dispatchLogoEvent(storageKey, null);
     setCustomUrl(null);
     toast.success(`${label} reverted to IIMS default logo.`);
   }

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { store } from "@/store/iims.store";
 import { authService } from "@/services/auth.service";
+import { loadLogo } from "@/lib/logo-storage";
 import { useAuth } from "@/hooks/use-auth";
 import type { UserRole } from "@/types/auth.types";
 
@@ -142,8 +143,8 @@ function LoginForm() {
     setMounted(true);
     const text = generateCaptchaText();
     setCaptchaText(text);
-    setOrgLogoLight(localStorage.getItem("iims_org_logo"));
-    setOrgLogoDark(localStorage.getItem("iims_org_logo_dark"));
+    loadLogo("iims_org_logo").then(setOrgLogoLight);
+    loadLogo("iims_org_logo_dark").then(setOrgLogoDark);
     function onStorage(e: StorageEvent) {
       if (e.key === "iims_org_logo")      setOrgLogoLight(e.newValue);
       if (e.key === "iims_org_logo_dark") setOrgLogoDark(e.newValue);
