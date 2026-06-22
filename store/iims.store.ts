@@ -28,6 +28,11 @@ const KEYS = {
   TEMPLATES: "iims-templates",
 } as const;
 
+// Bump this string whenever seed data files change (users, projects, charges, rate items, templates).
+// A version match means localStorage already has current seed data — skip all writes.
+const SEED_VERSION = "2026-06-22-v1";
+const SEED_VERSION_KEY = "iims-seed-version";
+
 class Store {
   private seeded = false;
 
@@ -36,13 +41,16 @@ class Store {
   private ensureSeeded(): void {
     if (this.seeded || typeof window === "undefined") return;
     this.seeded = true;
+
+    // Already seeded at this version — skip all writes to avoid blocking the main thread
+    if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) return;
+
     if (!this.read<IUser[]>(KEYS.USERS)) {
       // Strip passwords — auth is handled by auth.service; passwords must not persist to localStorage
       this.write(KEYS.USERS, SEED_USERS.map(({ password: _pw, ...u }) => ({ ...u, password: "" })));
     }
 
-    // Always merge seed projects so new fields (e.g. documentSets, draftData)
-    // added to SEED_PROJECTS are applied even when localStorage already has data.
+    // Merge seed projects so new fields added to SEED_PROJECTS are applied.
     // User-created projects (IDs not in the seed set) are preserved as-is.
     const seedIds = new Set(SEED_PROJECTS.map((p) => p.id));
     const stored = this.read<IProject[]>(KEYS.PROJECTS) ?? [];
@@ -52,6 +60,8 @@ class Store {
     if (!this.read<ICharge[]>(KEYS.CHARGES)) this.write(KEYS.CHARGES, SEED_CHARGES);
     if (!this.read<IRateItem[]>(KEYS.RATE_ITEMS)) this.write(KEYS.RATE_ITEMS, SEED_RATE_ITEMS);
     if (!this.read<ITemplate[]>(KEYS.TEMPLATES)) this.write(KEYS.TEMPLATES, SEED_TEMPLATES);
+
+    localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
   }
 
   // ── Low-level localStorage helpers ────────────────────────────────────────
@@ -505,6 +515,7 @@ class Store {
   resetToSeedData(): void {
     if (typeof window === "undefined") return;
     Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem(SEED_VERSION_KEY);
     this.seeded = false;
     this.ensureSeeded();
   }
