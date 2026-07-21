@@ -106,13 +106,22 @@ export const ROUTE_ROLES = {
     "Tender Clerk",
   ] as UserRole[],
 
-  // ── Award & execution ─────────────────────────────────────────────────────────
-  // EE issues LOA; ACEO/CEO oversight; Contractor views their own LOA
-  letterOfAward: [
+  // ── GB Approval ───────────────────────────────────────────────────────────────
+  // TC records GB Resolution, Approval Letter, L1 contractor and percentage after ACEO Financial Bid approval
+  gbApproval: [
+    "Tender Clerk",
     "Executive Engineer",
     "Additional Chief Executive Officer",
     "Chief Executive Officer",
-    "Contractor",
+  ] as UserRole[],
+
+  // ── Award & execution ─────────────────────────────────────────────────────────
+  // LOI chain: TC (Creator) → EE (Verify) → CAFO (Verify) → ACEO (Final Approval)
+  letterOfAward: [
+    "Tender Clerk",
+    "Executive Engineer",
+    "Chief Accounts and Finance Officer",
+    "Additional Chief Executive Officer",
   ] as UserRole[],
 
   // Work Order list page — roles with WO in sidebar nav

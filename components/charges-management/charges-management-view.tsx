@@ -607,44 +607,6 @@ export function ChargesManagementView() {
           ))}
         </div>
 
-        {/* Active charges visual breakdown */}
-        {active.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-              Active Charge Breakdown
-            </p>
-            <div className="space-y-3">
-              {active
-                .slice()
-                .sort((a, b) => b.percentage - a.percentage)
-                .map((c) => {
-                  const share = totalPct > 0 ? (c.percentage / totalPct) * 100 : 0;
-                  const dot   = chargeColor(c.id);
-                  return (
-                    <div key={c.id} className="flex items-center gap-3">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-                      <span className="text-sm text-gray-700 dark:text-gray-200 min-w-0 flex-1 truncate">{c.type}</span>
-                      <div className="w-32 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shrink-0">
-                        <div className={`h-full rounded-full ${dot}`} style={{ width: `${share}%` }} />
-                      </div>
-                      <span className="text-sm font-bold text-gray-800 dark:text-gray-200 w-12 text-right shrink-0 tabular-nums">
-                        {c.percentage}%
-                      </span>
-                    </div>
-                  );
-                })}
-              <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <div className="w-2.5 h-2.5 shrink-0" />
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex-1">Total Active</span>
-                <div className="w-32 shrink-0" />
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-400 w-12 text-right tabular-nums">
-                  {totalPct.toFixed(2)}%
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Controls */}
         <div className="flex flex-wrap gap-3">
           {/* Search */}

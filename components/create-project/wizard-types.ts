@@ -15,6 +15,7 @@ export interface BasicDetails {
   workDemandBy: string;
   workDemandByDocumentName: string;
   workDemandByDocumentFile?: UploadedFile;
+  workDescription: string;
 }
 
 export interface UploadedFile {
@@ -151,6 +152,7 @@ export const BLANK_BASIC: BasicDetails = {
   workDemandBy: "",
   workDemandByDocumentName: "",
   workDemandByDocumentFile: undefined,
+  workDescription: "",
 };
 
 export const DEMO_FILL: Partial<WizardState> = {
@@ -170,6 +172,7 @@ export const DEMO_FILL: Partial<WizardState> = {
     workActivity: "Road Works",
     workDemandBy: "Zilla Parishad",
     workDemandByDocumentName: "",
+    workDescription: "Construction of approach road including sub-base, base course, wearing course, and drainage works as per IRC specifications and MORTH guidelines.",
   },
   subWorks: [
     { id: "sw-1", name: "Approach Road Construction - Phase 1" },

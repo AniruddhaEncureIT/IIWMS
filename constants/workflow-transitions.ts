@@ -272,7 +272,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
         label: "Publish Tender",
         actionType: "approve",
         requiresRemarks: true,
-        nextStageId: "stage-8",
+        nextStageId: "stage-15b",
         nextOwnerRole: "Tender Clerk",
       },
       {
@@ -290,7 +290,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // Bids are submitted externally on MahaTender; TC records outcomes in IIMS
   {
     id: "stage-8",
-    stageNumber: 8,
+    stageNumber: 11,
     name: "Technical Bid Processing",
     ownerRole: "Tender Clerk",
     status: "Tender Published",
@@ -310,7 +310,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 9: Technical Bid - EE Review ─────────────────────────────────
   {
     id: "stage-9",
-    stageNumber: 9,
+    stageNumber: 12,
     name: "Technical Bid - EE Review",
     ownerRole: "Executive Engineer",
     status: "Technical Bid - EE Review",
@@ -338,7 +338,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 10: Technical Bid - CAFO Review ──────────────────────────────
   {
     id: "stage-10",
-    stageNumber: 10,
+    stageNumber: 13,
     name: "Technical Bid - CAFO Review",
     ownerRole: "Chief Accounts and Finance Officer",
     status: "Technical Bid - CAFO Review",
@@ -366,7 +366,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 11: Technical Bid - ACEO Approval ────────────────────────────
   {
     id: "stage-11",
-    stageNumber: 11,
+    stageNumber: 14,
     name: "Technical Bid - ACEO Approval",
     ownerRole: "Additional Chief Executive Officer",
     status: "Technical Bid - ACEO Review",
@@ -394,7 +394,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 12: Financial Bid Processing ─────────────────────────────────
   {
     id: "stage-12",
-    stageNumber: 12,
+    stageNumber: 15,
     name: "Financial Bid Processing",
     ownerRole: "Tender Clerk",
     status: "Technical Bid Finalized",
@@ -414,7 +414,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 13: Financial Bid - EE Review ────────────────────────────────
   {
     id: "stage-13",
-    stageNumber: 13,
+    stageNumber: 16,
     name: "Financial Bid - EE Review",
     ownerRole: "Executive Engineer",
     status: "Financial Bid - EE Review",
@@ -442,7 +442,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 14: Financial Bid - CAFO Review ──────────────────────────────
   {
     id: "stage-14",
-    stageNumber: 14,
+    stageNumber: 17,
     name: "Financial Bid - CAFO Review",
     ownerRole: "Chief Accounts and Finance Officer",
     status: "Financial Bid - CAFO Review",
@@ -470,18 +470,18 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 15: Financial Bid - ACEO Review ──────────────────────────────
   {
     id: "stage-15",
-    stageNumber: 15,
+    stageNumber: 18,
     name: "Financial Bid - ACEO Review",
     ownerRole: "Additional Chief Executive Officer",
     status: "Financial Bid - ACEO Review",
-    description: "ACEO performs administrative recommendation and forwards to TC for L1 selection",
+    description: "ACEO approves Financial Bid recommendation. GB Approval is recorded separately by TC offline.",
     possibleActions: [
       {
-        id: "aceo-forward-to-l1-selection",
-        label: "Forward for L1 Selection",
-        actionType: "forward",
+        id: "aceo-approve-fin-bid",
+        label: "Approve Financial Bid Recommendation",
+        actionType: "approve",
         requiresRemarks: true,
-        nextStageId: "stage-16",
+        nextStageId: "stage-15b",
         nextOwnerRole: "Tender Clerk",
       },
       {
@@ -495,14 +495,36 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
     ],
   },
 
-  // ── STAGE 16: L1 Selection & GB Resolution ─────────────────────────────
+  // ── STAGE 15b: GB Approval (TC) ────────────────────────────────────────
+  // GB Approval happens offline via Governing Body. TC records the outcome in IIMS.
+  {
+    id: "stage-15b",
+    stageNumber: 19,
+    name: "GB Approval",
+    ownerRole: "Tender Clerk",
+    status: "Pending GB Approval",
+    description: "TC records GB Approval outcome — uploads GB Resolution Copy and Approval Letter, selects L1 Contractor from dropdown, and enters approved Above/Below percentage.",
+    possibleActions: [
+      {
+        id: "tc-submit-gb-approval",
+        label: "Submit GB Approval",
+        actionType: "submit",
+        requiresRemarks: false,
+        nextStageId: "stage-16",
+        nextOwnerRole: "Tender Clerk",
+      },
+    ],
+  },
+
+  // ── STAGE 16: LOI Preparation (TC) ─────────────────────────────────────
+  // Status "Financial Bid Approved" — set when TC submits GB Approval
   {
     id: "stage-16",
-    stageNumber: 16,
-    name: "L1 Selection & GB Resolution",
+    stageNumber: 20,
+    name: "LOI Preparation",
     ownerRole: "Tender Clerk",
-    status: "Pending L1 Selection",
-    description: "TC selects L1 contractor, uploads GB Resolution, and forwards for LOI approval",
+    status: "Financial Bid Approved",
+    description: "TC prepares Letter of Intent using GB-approved L1 contractor and percentage, then submits for EE review",
     possibleActions: [
       {
         id: "tc-forward-to-loi",
@@ -518,10 +540,10 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 17: LOI - EE Review ──────────────────────────────────────────
   {
     id: "stage-17",
-    stageNumber: 17,
+    stageNumber: 21,
     name: "LOI - EE Review",
     ownerRole: "Executive Engineer",
-    status: "Financial Bid Approved",
+    status: "LOI - EE Review",
     description: "EE reviews LOI and forwards to CAFO",
     possibleActions: [
       {
@@ -546,7 +568,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 18: LOI - CAFO Review ────────────────────────────────────────
   {
     id: "stage-18",
-    stageNumber: 18,
+    stageNumber: 22,
     name: "LOI - CAFO Review",
     ownerRole: "Chief Accounts and Finance Officer",
     status: "LOI - CAFO Review",
@@ -574,7 +596,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 19: LOI - ACEO Approval ──────────────────────────────────────
   {
     id: "stage-19",
-    stageNumber: 19,
+    stageNumber: 23,
     name: "LOI - ACEO Approval",
     ownerRole: "Additional Chief Executive Officer",
     status: "LOI - ACEO Approval",
@@ -602,7 +624,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 19b: Work Order - TC Preparation ─────────────────────────────
   {
     id: "stage-19b",
-    stageNumber: 20,
+    stageNumber: 24,
     name: "Work Order - TC Preparation",
     ownerRole: "Tender Clerk",
     status: "Work Order - TC Preparation",
@@ -622,10 +644,10 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 20: Work Order - EE Review ───────────────────────────────────
   {
     id: "stage-20",
-    stageNumber: 20,
+    stageNumber: 25,
     name: "Work Order - EE Review",
     ownerRole: "Executive Engineer",
-    status: "LOI Issued",
+    status: "Work Order - EE Review",
     description: "EE reviews Work Order and forwards to CAFO",
     possibleActions: [
       {
@@ -650,7 +672,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 21: Work Order - CAFO Review ─────────────────────────────────
   {
     id: "stage-21",
-    stageNumber: 21,
+    stageNumber: 26,
     name: "Work Order - CAFO Review",
     ownerRole: "Chief Accounts and Finance Officer",
     status: "Work Order - CAFO Review",
@@ -678,7 +700,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 22: Work Order - ACEO Approval ───────────────────────────────
   {
     id: "stage-22",
-    stageNumber: 22,
+    stageNumber: 27,
     name: "Work Order - ACEO Approval",
     ownerRole: "Additional Chief Executive Officer",
     status: "Work Order - ACEO Approval",
@@ -706,7 +728,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 23: Measurement Book Creation ────────────────────────────────
   {
     id: "stage-23",
-    stageNumber: 23,
+    stageNumber: 28,
     name: "Measurement Book",
     ownerRole: "Sectional Engineer",
     status: "Work Order Issued",
@@ -726,7 +748,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 24: Measurement Verification (DE) ────────────────────────────
   {
     id: "stage-24",
-    stageNumber: 24,
+    stageNumber: 29,
     name: "Measurement Verification",
     ownerRole: "Deputy Engineer",
     status: "Pending Measurement Verification",
@@ -754,7 +776,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 25: Contractor Acceptance ────────────────────────────────────
   {
     id: "stage-25",
-    stageNumber: 25,
+    stageNumber: 30,
     name: "Contractor Acceptance",
     ownerRole: "Contractor",
     status: "Pending Contractor Acceptance",
@@ -782,7 +804,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 26: Measurement Approval (EE) ────────────────────────────────
   {
     id: "stage-26",
-    stageNumber: 26,
+    stageNumber: 31,
     name: "Measurement Approval",
     ownerRole: "Executive Engineer",
     status: "Pending Measurement Approval",
@@ -810,7 +832,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 27: Auditor Review ───────────────────────────────────────────
   {
     id: "stage-27",
-    stageNumber: 27,
+    stageNumber: 32,
     name: "Auditor Review",
     ownerRole: "Auditor",
     status: "Pending Auditor Review",
@@ -838,7 +860,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 28: Bill Generation ──────────────────────────────────────────
   {
     id: "stage-28",
-    stageNumber: 28,
+    stageNumber: 33,
     name: "Bill Generation",
     ownerRole: "Accountant",
     status: "Ready for Billing",
@@ -858,7 +880,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 29: Bill Verification ───────────────────────────────────────
   {
     id: "stage-29",
-    stageNumber: 29,
+    stageNumber: 34,
     name: "Bill Verification",
     ownerRole: "Assistant Accounts Officer",
     status: "Pending Bill Verification",
@@ -886,7 +908,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 30: Bill Approval (CAFO) ────────────────────────────────────
   {
     id: "stage-30",
-    stageNumber: 30,
+    stageNumber: 35,
     name: "Bill Approval",
     ownerRole: "Chief Accounts and Finance Officer",
     status: "Pending Bill Approval",
@@ -914,7 +936,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 31: Bill Review (ACEO) ───────────────────────────────────────
   {
     id: "stage-31",
-    stageNumber: 31,
+    stageNumber: 36,
     name: "Bill Review",
     ownerRole: "Additional Chief Executive Officer",
     status: "Pending ACEO Bill Review",
@@ -942,7 +964,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 32: Final Approval & Project Closure (CEO) ────────────────────
   {
     id: "stage-32",
-    stageNumber: 32,
+    stageNumber: 37,
     name: "Final Approval & Project Closure",
     ownerRole: "Chief Executive Officer",
     status: "Pending CEO Final Approval",
@@ -970,7 +992,7 @@ export const WORKFLOW_STAGES: WorkflowStage[] = [
   // ── STAGE 33: Project Completed ────────────────────────────────────────
   {
     id: "stage-33",
-    stageNumber: 33,
+    stageNumber: 38,
     name: "Project Completed",
     ownerRole: "Chief Executive Officer",
     status: "Project Completed",
@@ -997,6 +1019,18 @@ const STATUS_MAPPING: Record<string, string> = {
   "LOA - CAFO Review": "LOI - CAFO Review",
   "LOA - ACEO Approval": "LOI - ACEO Approval",
   "LOA Issued": "LOI Issued",
+  // GB Approval stage inserted: old "Pending L1 Selection" projects map to new GB Approval step
+  "Pending L1 Selection": "Pending GB Approval",
+  // Technical/Financial bid stages removed from internal workflow: existing projects at these
+  // statuses are fast-forwarded to GB Approval so TC can record the offline outcome.
+  "Tender Published":           "Pending GB Approval",
+  "Technical Bid - EE Review":  "Pending GB Approval",
+  "Technical Bid - CAFO Review":"Pending GB Approval",
+  "Technical Bid - ACEO Review":"Pending GB Approval",
+  "Technical Bid Finalized":    "Pending GB Approval",
+  "Financial Bid - EE Review":  "Pending GB Approval",
+  "Financial Bid - CAFO Review":"Pending GB Approval",
+  "Financial Bid - ACEO Review":"Pending GB Approval",
 };
 
 // ── Workflow Lookup Helpers ────────────────────────────────────────────────────

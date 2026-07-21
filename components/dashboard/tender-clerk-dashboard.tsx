@@ -8,19 +8,16 @@ import {
 import { store } from "@/store/iims.store";
 import {
   StatCard, QuickAction, ProjectCard, ActivityTimeline,
-  SectionCard, formatCr, totalBudget,
+  SectionCard, formatCr, totalBudget, getPendingForRole,
 } from "./dash-shared";
 import type { IProjectHistory } from "@/types/iims.types";
 
 export function TenderClerkDashboard({ name }: { name: string }) {
   const allProjects = store.getAllProjects();
 
-  // DTP sanctioned but no tender created yet
-  const dtpReady = allProjects.filter(
-    (p) => p.status === "DTP Sanctioned" && !p.tenderData
-  ).length;
+  const pendingProjects = getPendingForRole(allProjects, "Tender Clerk");
+  const pendingCount = pendingProjects.length;
 
-  // Active tenders (published/in progress)
   const activeTenders = allProjects.filter((p) => {
     const s = p.status.toLowerCase();
     return s.includes("tender") || s.includes("bid");
@@ -32,12 +29,7 @@ export function TenderClerkDashboard({ name }: { name: string }) {
     p.status.toLowerCase().includes("work order") || p.status.toLowerCase().includes("loa")
   ).length;
 
-  // Relevant projects for clerk
-  const recent = allProjects
-    .filter((p) => {
-      const s = p.status.toLowerCase();
-      return s.includes("dtp") || s.includes("tender") || s.includes("bid") || s.includes("loa");
-    })
+  const recent = [...pendingProjects]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
 
@@ -61,7 +53,7 @@ export function TenderClerkDashboard({ name }: { name: string }) {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock}        color="yellow" label="DTP Ready for Tender" value={dtpReady}      trend="Waiting to be published" />
+        <StatCard icon={Clock}        color="yellow" label="Pending Actions"       value={pendingCount}  trend="Awaiting your action" />
         <StatCard icon={CheckCircle2} color="blue"   label="Active Tenders"       value={activeTenders} trend="Published / In progress" />
         <StatCard icon={TrendingUp}   color="green"  label="Total Budget"         value={formatCr(budget)} trend="All projects" />
         <StatCard icon={Activity}     color="purple" label="Work Orders / LOI"    value={workOrders}    trend="Post-tender stage" />
@@ -74,11 +66,11 @@ export function TenderClerkDashboard({ name }: { name: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <SectionCard
-            title="Tender Pipeline"
-            action={<Link href="/tender-procedure" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>}
+            title="Pending Actions"
+            action={<Link href="/all-projects" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>}
           >
             {recent.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No tender projects</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No pending projects</p>
             ) : (
               <div className="space-y-3">
                 {recent.map((p) => <ProjectCard key={p.id} project={p} />)}

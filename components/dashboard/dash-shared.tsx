@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Calendar, TrendingUp, Activity, Bell, ChevronRight } from "lucide-react";
 import { store } from "@/store/iims.store";
+import { WORKFLOW_STAGES } from "@/constants/workflow-transitions";
 import type { IProject, IProjectHistory } from "@/types/iims.types";
 
 // ─── Currency helpers ─────────────────────────────────────────────────────────
@@ -302,45 +303,22 @@ export function SectionCard({
 
 // ─── Pending actions dashboard panel ─────────────────────────────────────────
 
-const WORKFLOW_ROLES = new Set([
-  "Sectional Engineer", "Deputy Engineer", "Executive Engineer", "Tender Clerk",
-  "Chief Accounts and Finance Officer", "Additional Chief Executive Officer",
-  "Chief Executive Officer", "Auditor", "Accountant", "Assistant Accounts Officer",
-]);
+const OWNED_STATUSES_BY_ROLE: Map<string, Set<string>> = (() => {
+  const map = new Map<string, Set<string>>();
+  for (const stage of WORKFLOW_STAGES) {
+    const role = stage.ownerRole as string;
+    if (!map.has(role)) map.set(role, new Set());
+    map.get(role)!.add(stage.status);
+  }
+  return map;
+})();
 
-function getPendingForRole(projects: IProject[], role: string): IProject[] {
-  return projects.filter((p) => {
-    const s = p.status.toLowerCase();
-    switch (role) {
-      case "Sectional Engineer":
-        return s === "draft" || s.includes("returned");
-      case "Deputy Engineer":
-        return s.includes("submitted for verification") || s.includes("submitted to de");
-      case "Executive Engineer":
-        return s.includes("submitted to ee") || s.includes("dtp submitted") || s.includes("awaiting ee");
-      case "Tender Clerk":
-        return (
-          s.includes("dtp sanctioned") ||
-          s.includes("tender published") ||
-          (!!p.tenderData?.technicalBid && !p.tenderData?.financialBid) ||
-          (p.tenderData?.financialBid?.status?.toLowerCase().includes("approved by additional ceo") && !p.tenderData?.loa) === true
-        );
-      case "Chief Accounts and Finance Officer":
-        return s.includes("pending cafo") || s.includes("submitted to cafo") || s.includes("awaiting cafo");
-      case "Additional Chief Executive Officer":
-        return s.includes("submitted to aceo") || s.includes("approved by cafo") || s.includes("awaiting aceo");
-      case "Chief Executive Officer":
-        return s.includes("submitted to ceo") || s.includes("approved by aceo") || s.includes("awaiting ceo");
-      case "Auditor":
-        return s.includes("pending auditor") || s.includes("forwarded to auditor");
-      case "Accountant":
-        return s.includes("pending accountant") || s.includes("forwarded to accountant");
-      case "Assistant Accounts Officer":
-        return s.includes("pending aao") || s.includes("forwarded to aao");
-      default:
-        return false;
-    }
-  });
+const WORKFLOW_ROLES = new Set(OWNED_STATUSES_BY_ROLE.keys());
+
+export function getPendingForRole(projects: IProject[], role: string): IProject[] {
+  const owned = OWNED_STATUSES_BY_ROLE.get(role);
+  if (!owned) return [];
+  return projects.filter((p) => owned.has(p.status));
 }
 
 export function PendingActionsSection({ role }: { role: string }) {

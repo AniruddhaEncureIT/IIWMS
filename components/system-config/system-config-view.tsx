@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { applyBrandScale } from "@/lib/brand";
 import { saveLogo, loadLogo, removeLogo } from "@/lib/logo-storage";
+import { validateEmail } from "@/lib/validators";
 
 // ─── Persistence keys ──────────────────────────────────────────────────────────
 
@@ -281,7 +282,7 @@ function GeneralSettingsSection() {
     if (!config.orgName.trim())        e.orgName        = "Organization name is required.";
     if (!config.orgNameMarathi.trim()) e.orgNameMarathi = "Marathi name is required.";
     if (!config.address.trim())        e.address        = "Address is required.";
-    if (config.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.email)) e.email = "Invalid email address.";
+    if (config.email) { const emailErr = validateEmail(config.email); if (emailErr) e.email = emailErr; }
     setErrors(e);
     return Object.keys(e).length === 0;
   }

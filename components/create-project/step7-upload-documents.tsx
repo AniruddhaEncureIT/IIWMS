@@ -93,7 +93,14 @@ function UploadZone({ zone, files, onAdd, onRemove, error }: UploadZoneProps) {
   function processFiles(raw: FileList | null) {
     if (!raw) return;
     const added: UploadedFile[] = [];
+    const allowed = zone.accept.split(",").map((a) => a.trim().toLowerCase());
+    const allowedLabel = allowed.map((a) => a.replace(".", "").toUpperCase()).join(", ");
     for (const f of Array.from(raw)) {
+      const ext = "." + (f.name.split(".").pop() ?? "").toLowerCase();
+      if (!allowed.includes(ext)) {
+        toast.error(`Invalid file type. Allowed types: ${allowedLabel}`);
+        continue;
+      }
       if (f.size > zone.maxBytes) {
         toast.error(`${f.name} exceeds ${zone.maxBytes / MB} MB limit`);
         continue;

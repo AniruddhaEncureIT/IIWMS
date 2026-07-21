@@ -60,7 +60,7 @@ function generateNotifications(role: string): INotification[] {
       );
 
     projects
-      .filter((p) => p.mbData?.some((mb) => mb.status === "Submitted to DE"))
+      .filter((p) => p.mbData?.some((mb) => mb.status === "Pending Measurement Verification"))
       .slice(0, 2)
       .forEach((p) =>
         notes.push({
@@ -69,7 +69,7 @@ function generateNotifications(role: string): INotification[] {
           category:    "update",
           title:       "MB Submitted for Verification",
           message:     `${p.projectName} — Measurement Book sent to Deputy Engineer.`,
-          time:        p.mbData?.find((mb) => mb.status === "Submitted to DE")?.createdAt ?? p.createdAt,
+          time:        p.mbData?.find((mb) => mb.status === "Pending Measurement Verification")?.createdAt ?? p.createdAt,
           projectId:   p.id,
           actionLabel: "View MB",
           actionHref:  `/mb-billing/${p.id}`,
@@ -80,7 +80,7 @@ function generateNotifications(role: string): INotification[] {
   // ── Deputy Engineer ────────────────────────────────────────────────────────
   if (role === "Deputy Engineer") {
     projects
-      .filter((p) => p.status?.includes("Deputy Engineer") || p.status === "Submitted to DE")
+      .filter((p) => p.status?.includes("Deputy Engineer") || p.status === "Pending Measurement Verification")
       .slice(0, 4)
       .forEach((p) =>
         notes.push({
@@ -97,10 +97,10 @@ function generateNotifications(role: string): INotification[] {
       );
 
     projects
-      .filter((p) => p.mbData?.some((mb) => mb.status === "Submitted to DE"))
+      .filter((p) => p.mbData?.some((mb) => mb.status === "Pending Measurement Verification"))
       .slice(0, 3)
       .forEach((p) => {
-        const mb = p.mbData!.find((m) => m.status === "Submitted to DE")!;
+        const mb = p.mbData!.find((m) => m.status === "Pending Measurement Verification")!;
         notes.push({
           id:          `de-mb-${p.id}-${mb.id}`,
           type:        "urgent",
@@ -196,10 +196,10 @@ function generateNotifications(role: string): INotification[] {
       );
 
     projects
-      .filter((p) => p.mbData?.some((mb) => mb.status === "Verified by DE"))
+      .filter((p) => p.mbData?.some((mb) => mb.status === "Pending Measurement Approval"))
       .slice(0, 3)
       .forEach((p) => {
-        const mb = p.mbData!.find((m) => m.status === "Verified by DE")!;
+        const mb = p.mbData!.find((m) => m.status === "Pending Measurement Approval")!;
         notes.push({
           id:          `ee-mb-${p.id}-${mb.id}`,
           type:        "urgent",
@@ -288,10 +288,10 @@ function generateNotifications(role: string): INotification[] {
   // ── Auditor ────────────────────────────────────────────────────────────────
   if (role === "Auditor") {
     const mbPending = projects.filter((p) =>
-      p.mbData?.some((mb) => mb.status === "Pending at Auditor")
+      p.mbData?.some((mb) => mb.status === "Approved by EE")
     );
     mbPending.slice(0, 5).forEach((p) => {
-      const mb = p.mbData!.find((m) => m.status === "Pending at Auditor")!;
+      const mb = p.mbData!.find((m) => m.status === "Approved by EE")!;
       notes.push({
         id:          `aud-${p.id}-${mb.id}`,
         type:        "urgent",

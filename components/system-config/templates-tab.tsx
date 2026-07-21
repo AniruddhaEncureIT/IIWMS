@@ -154,7 +154,7 @@ function TemplateEditorModal({ tmpl, onClose, onSave }: {
                   Template Name <span className="text-red-500">*</span>
                 </label>
                 <input id={`${uid}-name`} value={form.name} onChange={(e) => set("name", e.target.value)}
-                  placeholder="e.g. Standard LOA" className={inp(errors.name)} />
+                  placeholder="e.g. Standard LOI" className={inp(errors.name)} />
                 {errors.name && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.name}</p>}
               </div>
               <div>

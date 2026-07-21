@@ -8,17 +8,15 @@ import {
 import { store } from "@/store/iims.store";
 import {
   StatCard, QuickAction, ProjectCard, ActivityTimeline,
-  SectionCard, formatCr, totalBudget,
+  SectionCard, formatCr, totalBudget, getPendingForRole,
 } from "./dash-shared";
 import type { IProjectHistory } from "@/types/iims.types";
 
 export function EEDashboard({ name }: { name: string }) {
   const allProjects = store.getAllProjects();
 
-  const pendingEE = allProjects.filter((p) => {
-    const s = p.status.toLowerCase();
-    return s.includes("executive engineer") || s.includes("technical sanction");
-  }).length;
+  const pendingProjects = getPendingForRole(allProjects, "Executive Engineer");
+  const pendingEE = pendingProjects.length;
 
   const approved = allProjects.filter((p) => {
     const s = p.status.toLowerCase();
@@ -28,11 +26,7 @@ export function EEDashboard({ name }: { name: string }) {
   const budget = totalBudget(allProjects);
   const active = allProjects.filter((p) => p.status !== "Draft" && !p.status.toLowerCase().includes("payment")).length;
 
-  const recent = allProjects
-    .filter((p) => {
-      const s = p.status.toLowerCase();
-      return s.includes("executive engineer") || s.includes("cost approved") || s.includes("dtp") || s.includes("work order") || s.includes("mb");
-    })
+  const recent = [...pendingProjects]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
 
@@ -56,7 +50,7 @@ export function EEDashboard({ name }: { name: string }) {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock}        color="yellow" label="Pending Sanction"  value={pendingEE} trend="Awaiting EE action" />
+        <StatCard icon={Clock}        color="yellow" label="Pending Actions"   value={pendingEE} trend="Awaiting your action" />
         <StatCard icon={CheckCircle2} color="green"  label="Sanctioned"       value={approved}  trend="Approved/Sanctioned" />
         <StatCard icon={TrendingUp}   color="blue"   label="Total Budget"     value={formatCr(budget)} trend="All projects" />
         <StatCard icon={Activity}     color="purple" label="Active Projects"  value={active}    trend="In progress" />
@@ -69,12 +63,12 @@ export function EEDashboard({ name }: { name: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <SectionCard
-            title="Pending EE Action"
+            title="Pending Actions"
             action={<Link href="/all-projects" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>}
           >
             {recent.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                No projects pending EE action
+                No pending projects
               </p>
             ) : (
               <div className="space-y-3">

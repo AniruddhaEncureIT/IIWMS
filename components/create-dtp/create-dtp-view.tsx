@@ -143,15 +143,22 @@ function SectionHeader({ num, title, badge }: { num: number; title: string; badg
 
 // ─── Field primitives ─────────────────────────────────────────────────────────
 
+// Structural base shared by all field controls — no bg/text/focus-ring so editable vs
+// read-only variants can apply those without Tailwind CSS ordering conflicts.
 const fieldBase =
-  "w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition";
-const readOnlyClass = "bg-gray-50 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 cursor-default";
+  "w-full rounded-lg border border-gray-200 dark:border-gray-600 text-sm px-3 py-2 focus:outline-none transition";
+// Applied when the field is interactive (SE edit mode).
+const fieldEditable =
+  "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500";
+// Applied when the field is read-only (DE/EE review, auto-fetched values).
+const readOnlyClass =
+  "bg-gray-50 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 cursor-default focus:ring-0 focus:border-gray-200 dark:focus:border-gray-600";
 
 function Field({
-  label, value, onChange, type = "text", readOnly = false, required = false, rows = 3,
+  label, value, onChange, type = "text", readOnly = false, required = false, rows = 3, placeholder,
 }: {
   label: string; value: string; onChange?: (v: string) => void;
-  type?: "text" | "date" | "textarea"; readOnly?: boolean; required?: boolean; rows?: number;
+  type?: "text" | "date" | "textarea"; readOnly?: boolean; required?: boolean; rows?: number; placeholder?: string;
 }) {
   return (
     <div>
@@ -160,35 +167,41 @@ function Field({
       </label>
       {type === "textarea" ? (
         <textarea rows={rows} value={value} readOnly={readOnly}
+          placeholder={readOnly ? undefined : placeholder}
           onChange={(e) => onChange?.(e.target.value)}
-          className={`${fieldBase} ${readOnly ? readOnlyClass : ""} resize-none`} />
+          className={`${fieldBase} ${readOnly ? readOnlyClass : fieldEditable} resize-none`} />
       ) : (
         <input type={type} value={value} readOnly={readOnly}
+          placeholder={readOnly ? undefined : placeholder}
           onChange={(e) => onChange?.(e.target.value)}
-          className={`${fieldBase} ${readOnly ? readOnlyClass : ""}`} />
+          className={`${fieldBase} ${readOnly ? readOnlyClass : fieldEditable}`} />
       )}
     </div>
   );
 }
 
 function SelectField({
-  label, value, onChange, options, readOnly = false,
+  label, value, onChange, options, readOnly = false, required = false, placeholder,
 }: {
   label: string; value: string; onChange?: (v: string) => void;
-  options: string[]; readOnly?: boolean;
+  options: string[]; readOnly?: boolean; required?: boolean; placeholder?: string;
 }) {
   if (readOnly) {
     return (
       <div>
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</label>
         <div className={`${fieldBase} ${readOnlyClass}`}>{value || "—"}</div>
+
       </div>
     );
   }
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</label>
-      <select value={value} onChange={(e) => onChange?.(e.target.value)} className={fieldBase}>
+      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <select value={value} onChange={(e) => onChange?.(e.target.value)} className={`${fieldBase} ${fieldEditable}`}>
+        <option value="" disabled>{placeholder ?? "Select…"}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
@@ -226,20 +239,14 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
   const [tsDate, setTsDate] = useState("");
   const [aaNumber, setAaNumber] = useState("");
   const [aaDate, setAaDate] = useState("");
-  const [completionPeriod, setCompletionPeriod] = useState("12 months");
-  const [dlpPeriod, setDlpPeriod] = useState("12 months");
-  const [paymentTerms, setPaymentTerms] = useState(
-    "Payment shall be made within 30 days of submission of running account bill duly verified by the Engineer-in-Charge, subject to deductions as per contract conditions and relevant government orders."
-  );
-  const [penaltyClause, setPenaltyClause] = useState(
-    "In the event of failure by the contractor to complete the work within the stipulated period, a penalty of 0.5% of the contract amount per week of delay shall be levied, subject to a maximum of 10% of the total contract value."
-  );
+  const [completionPeriod, setCompletionPeriod] = useState("");
+  const [dlpPeriod, setDlpPeriod] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
+  const [penaltyClause, setPenaltyClause] = useState("");
   const [ssrReference, setSsrReference] = useState("");
   const [dsrReference, setDsrReference] = useState("");
   const [specialConditions, setSpecialConditions] = useState("");
-  const [qualityStandards, setQualityStandards] = useState(
-    "All materials and workmanship shall conform to the relevant IS standards and the specifications laid down in the Schedule of Rates. Quality control tests shall be carried out as per prescribed frequencies."
-  );
+  const [qualityStandards, setQualityStandards] = useState("");
   const [remarks, setRemarks] = useState("");
 
   // documents
@@ -253,18 +260,18 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
     setUserName(u?.name ?? "");
     if (p) {
       const dtp = p.dtpData;
-      setTsNumber(dtp?.tsNumber ?? `TS/${new Date().getFullYear()}/${p.id.slice(-4)}`);
-      setTsDate(dtp?.tsDate ?? new Date().toISOString().slice(0, 10));
+      setTsNumber(dtp?.tsNumber ?? "");
+      setTsDate(dtp?.tsDate ?? "");
       setAaNumber(dtp?.aaNumber ?? "");
       setAaDate(dtp?.aaDate ?? "");
-      setCompletionPeriod(dtp?.completionPeriod ?? "12 months");
-      setDlpPeriod(dtp?.dlpPeriod ?? "12 months");
-      if (dtp?.paymentTerms) setPaymentTerms(dtp.paymentTerms);
-      if (dtp?.penaltyClause) setPenaltyClause(dtp.penaltyClause);
+      setCompletionPeriod(dtp?.completionPeriod ?? "");
+      setDlpPeriod(dtp?.dlpPeriod ?? "");
+      setPaymentTerms(dtp?.paymentTerms ?? "");
+      setPenaltyClause(dtp?.penaltyClause ?? "");
       setSsrReference(dtp?.ssrReference ?? p.ssrType ?? "");
-      setDsrReference(dtp?.dsrReference ?? "DSR 2023-24");
-      if (dtp?.specialConditions) setSpecialConditions(dtp.specialConditions);
-      if (dtp?.qualityStandards) setQualityStandards(dtp.qualityStandards);
+      setDsrReference(dtp?.dsrReference ?? p.dsrType ?? "");
+      setSpecialConditions(dtp?.specialConditions ?? "");
+      setQualityStandards(dtp?.qualityStandards ?? "");
       if (dtp?.remarks) setRemarks(dtp.remarks);
       // blob URLs can't be restored from store; docs show as names only
       if (dtp?.documents?.length) {
@@ -313,10 +320,18 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
 
   // ── file handlers ──────────────────────────────────────────────────────────
 
+  const DTP_ALLOWED_EXTS = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png"];
+  const DTP_ALLOWED_LABEL = "PDF, DOC, DOCX, XLS, XLSX, JPG, PNG";
+
   function addFiles(files: FileList | null) {
     if (!files || !isInEditMode) return;
     const newDocs: LocalDoc[] = [];
     Array.from(files).forEach((file) => {
+      const ext = "." + (file.name.split(".").pop() ?? "").toLowerCase();
+      if (!DTP_ALLOWED_EXTS.includes(ext)) {
+        toast.error(`Invalid file type. Allowed types: ${DTP_ALLOWED_LABEL}`);
+        return;
+      }
       if (file.size > MAX_FILE_SIZE) {
         toast.error(`${file.name} exceeds 20 MB limit.`);
         return;
@@ -393,8 +408,8 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
 
   async function handleSubmit() {
     if (!project) return;
-    if (!tsNumber.trim()) { toast.error("TS Number is required."); return; }
-    if (!completionPeriod) { toast.error("Completion period is required."); return; }
+    if (!completionPeriod) { toast.error("Completion Period is required."); return; }
+    if (!dlpPeriod) { toast.error("Defect Liability Period is required."); return; }
     setSaving(true);
     try {
       store.updateProject(project.id, { dtpData: buildDTPPayload(project, "Pending at Deputy Engineer") });
@@ -435,7 +450,10 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
         approvedAt: new Date().toISOString(),
         remarks,
       };
-      store.updateProject(project.id, { dtpData: dtp });
+      store.updateProject(project.id, {
+        dtpData: dtp,
+        technicalSanctionAmount: project.technicalSanctionAmount ?? estimatedAmt,
+      });
       const eeResult = store.approveProject(project.id, "Ready for Tender Preparation", remarks || "DTP approved by EE — ready for tender creation");
       if (!eeResult.ok) { toast.error(eeResult.error); return; }
       toast.success("DTP Approved! Ready for Tender Creation.");
@@ -553,7 +571,7 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
       {/* Tender parameters strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Estimated Amount", value: formatINR(estimatedAmt) },
+          { label: "Technical Sanction Amount", value: formatINR(project.technicalSanctionAmount ?? estimatedAmt) },
           { label: "EMD Amount (2%)",  value: formatINR(emdAmount) },
           { label: "Completion Period", value: completionPeriod },
           { label: "Class of Contractor", value: contractorClass },
@@ -604,10 +622,11 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Name of Work" value={project.projectName} readOnly />
                 <Field label="Estimate Amount (₹)" value={formatINR(estimatedAmt)} readOnly />
-                <Field label="Technical Sanction No." value={tsNumber} onChange={setTsNumber} readOnly={!isInEditMode} required />
-                <Field label="Sanction Date" value={tsDate} onChange={setTsDate} type="date" readOnly={!isInEditMode} />
-                <Field label="Administrative Approval No." value={aaNumber} onChange={setAaNumber} readOnly={!isInEditMode} />
-                <Field label="AA Date" value={aaDate} onChange={setAaDate} type="date" readOnly={!isInEditMode} />
+                <Field label="Technical Sanction No." value={tsNumber} readOnly />
+                <Field label="Sanction Date" value={tsDate} type="date" readOnly />
+                <Field label="Department Name" value={project.departmentName} readOnly />
+                <Field label="Division / Sub-Division" value={`${project.division} / ${project.subDivision}`} readOnly />
+                <Field label="Location (Taluka / Gram Panchayat)" value={`${project.taluka}, ${project.gramPanchayat}`} readOnly />
               </div>
             </section>
 
@@ -617,7 +636,7 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="Estimated Amount (₹)" value={formatINR(estimatedAmt)} readOnly />
                 <Field label="Technical Sanction Amount (₹)" value={formatINR(project.technicalSanctionAmount ?? estimatedAmt)} readOnly />
-                <Field label="AA Number" value={aaNumber} onChange={setAaNumber} readOnly={!isInEditMode} />
+                <Field label="Administrative Approval No." value={aaNumber} onChange={setAaNumber} readOnly={!isInEditMode} placeholder="Enter Administrative Approval Number" />
                 <Field label="AA Date" value={aaDate} onChange={setAaDate} type="date" readOnly={!isInEditMode} />
               </div>
             </section>
@@ -627,13 +646,17 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
               <SectionHeader num={3} title="General Conditions of Contract" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
                 <SelectField label="Completion Period" value={completionPeriod} onChange={setCompletionPeriod}
-                  options={["6 months", "9 months", "12 months", "18 months", "24 months"]} readOnly={!isInEditMode} />
+                  options={["6 months", "9 months", "12 months", "18 months", "24 months"]} readOnly={!isInEditMode}
+                  required placeholder="Select completion period" />
                 <SelectField label="Defect Liability Period (DLP)" value={dlpPeriod} onChange={setDlpPeriod}
-                  options={["12 months", "24 months", "36 months"]} readOnly={!isInEditMode} />
+                  options={["12 months", "24 months", "36 months"]} readOnly={!isInEditMode}
+                  required placeholder="Select defect liability period" />
               </div>
               <div className="space-y-5">
-                <Field label="Payment Terms" value={paymentTerms} onChange={setPaymentTerms} type="textarea" rows={4} readOnly={!isInEditMode} />
-                <Field label="Penalty Clause" value={penaltyClause} onChange={setPenaltyClause} type="textarea" rows={4} readOnly={!isInEditMode} />
+                <Field label="Payment Terms" value={paymentTerms} onChange={setPaymentTerms} type="textarea" rows={4} readOnly={!isInEditMode}
+                  placeholder="Enter payment terms and conditions applicable to this contract" />
+                <Field label="Penalty Clause" value={penaltyClause} onChange={setPenaltyClause} type="textarea" rows={4} readOnly={!isInEditMode}
+                  placeholder="Enter penalty clause for delay in completion of work" />
               </div>
             </section>
 
@@ -641,12 +664,14 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
             <section>
               <SectionHeader num={4} title="Technical Specifications" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-                <Field label="SSR Reference" value={ssrReference} onChange={setSsrReference} readOnly={!isInEditMode} />
-                <Field label="DSR Reference" value={dsrReference} onChange={setDsrReference} readOnly={!isInEditMode} />
+                <Field label="SSR Reference" value={ssrReference} readOnly />
+                <Field label="DSR Reference" value={dsrReference} readOnly />
               </div>
               <div className="space-y-5">
-                <Field label="Special Conditions" value={specialConditions} onChange={setSpecialConditions} type="textarea" rows={3} readOnly={!isInEditMode} />
-                <Field label="Quality Standards" value={qualityStandards} onChange={setQualityStandards} type="textarea" rows={3} readOnly={!isInEditMode} />
+                <Field label="Special Conditions" value={specialConditions} onChange={setSpecialConditions} type="textarea" rows={3} readOnly={!isInEditMode}
+                  placeholder="Enter any project-specific special conditions (leave blank if none)" />
+                <Field label="Quality Standards" value={qualityStandards} onChange={setQualityStandards} type="textarea" rows={3} readOnly={!isInEditMode}
+                  placeholder="Enter applicable IS/BIS standards and quality control requirements" />
               </div>
             </section>
 
@@ -749,7 +774,7 @@ export function CreateDTPView({ projectId }: { projectId: string }) {
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Add remarks or observations..."
-                className={`${fieldBase} resize-none`}
+                className={`${fieldBase} ${fieldEditable} resize-none`}
               />
               <p className="text-xs text-gray-400 dark:text-gray-500 text-right mt-1">{remarks.length} chars</p>
             </>

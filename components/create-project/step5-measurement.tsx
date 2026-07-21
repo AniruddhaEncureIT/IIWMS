@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X, FileText, Info } from "lucide-react";
+import { Plus, X, FileText, Info, AlertCircle } from "lucide-react";
 import type { MeasurementItem } from "./wizard-types";
 import { AUTO_GENERATED_DOCS } from "./wizard-types";
 
@@ -158,6 +158,13 @@ export function Step5Measurement({ items, onChange, errors }: Props) {
         </div>
         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Sum of all measurement amounts</p>
       </div>
+
+      {errors?.estimatedAmount && (
+        <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5 px-1" role="alert">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+          {errors.estimatedAmount}
+        </p>
+      )}
 
       {/* Auto-Generated Documents — informational only */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">

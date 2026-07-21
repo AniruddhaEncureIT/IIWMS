@@ -1,3 +1,14 @@
+// LEGACY COMPONENT — retained for backward compatibility only.
+// This view is rendered exclusively by /verification/[id], which is not linked
+// from any dashboard Pending Actions panel, navigation menu, or workflow button.
+// The primary DE/EE workflow runs through /project/[id] (project-details-view.tsx),
+// which uses nextStage.status from WORKFLOW_STAGES for all canonical transitions.
+//
+// Known non-canonical status issues in this file (do not fix until route is adopted):
+//   Line ~324: store.forwardProject omits nextStatus → falls back to "Pending at Executive Engineer" (legacy)
+//   Line ~328: store.approveProject hardcodes "Cost Approved" → not in WORKFLOW_STAGES, validateApprove returns {ok:false}
+//
+// Do not add navigation links to this route. Candidate for removal in a future cleanup sprint.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

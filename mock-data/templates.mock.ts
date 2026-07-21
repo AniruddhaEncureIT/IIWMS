@@ -65,7 +65,7 @@ Date: {{SANCTIONED_DATE}}
 Zilla Parishad, Pune Division
 Office of the Executive Engineer
 
-No.: {{LOA_NUMBER}}
+No.: {{LOI_NUMBER}}
 Date: {{ISSUE_DATE}}
 
 To,
@@ -128,7 +128,7 @@ GST No.: {{CONTRACTOR_GST}}
 Subject: Issue of Work Order for {{PROJECT_NAME}} — Reg.
 
 Reference:
-1. LOA No. {{LOA_NUMBER}} dated {{LOA_DATE}}
+1. LOI No. {{LOI_NUMBER}} dated {{LOI_DATE}}
 2. Agreement No. {{AGREEMENT_NUMBER}} dated {{AGREEMENT_DATE}}
 
 Sir/Madam,

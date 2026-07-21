@@ -35,13 +35,13 @@ const CATEGORY_META: Record<Category, {
     label: "Projects", icon: FolderOpen,
     color: "text-blue-600 dark:text-blue-400",
     emptyHint: "Search by project name, ID, division, taluka, or status.",
-    examples: ["Nashik Road", "Pune Division", "LOA Issued", "PROJ-"],
+    examples: ["Nashik Road", "Pune Division", "LOI Issued", "PROJ-"],
   },
   document: {
     label: "Documents", icon: FileText,
     color: "text-green-600 dark:text-green-400",
     emptyHint: "Search by document name or type.",
-    examples: ["LOA Signed", "Work Order", "DTP", "Agreement"],
+    examples: ["LOI Signed", "Work Order", "DTP", "Agreement"],
   },
   tender: {
     label: "Tenders", icon: Gavel,
@@ -53,7 +53,7 @@ const CATEGORY_META: Record<Category, {
     label: "Work Orders", icon: FileCheck,
     color: "text-violet-600 dark:text-violet-400",
     emptyHint: "Search by work order number or contractor name.",
-    examples: ["WO/2024", "Raj Constructions", "LOA Issued"],
+    examples: ["WO/2024", "Raj Constructions", "LOI Issued"],
   },
   mb: {
     label: "MB Numbers", icon: ClipboardList,

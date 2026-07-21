@@ -65,16 +65,20 @@ class AuthService {
   }
 
   getStoredSession(): { user: User; tokens: AuthTokens } | null {
-    // Check if user is stored (means they're logged in)
-    // Tokens are in HTTP-only cookie (verified by middleware)
     const user = store.get<User>(STORAGE_KEYS.AUTH_USER);
     if (!user) return null;
-
-    // Return user with empty tokens (tokens are in cookie, not readable by JS)
     return {
       user,
       tokens: { accessToken: "", refreshToken: "", expiresAt: 0 },
     };
+  }
+
+  createSessionForUser(user: User): void {
+    store.set(STORAGE_KEYS.AUTH_USER, user);
+    const accessToken = `mock_access_${Math.random().toString(36).slice(2)}`;
+    const isProduction = process.env.NODE_ENV === "production";
+    const secure = isProduction ? "; Secure" : "";
+    document.cookie = `${STORAGE_KEYS.AUTH_TOKEN}=${accessToken}; path=/; max-age=${60 * 60 * 8}; SameSite=Lax${secure}`;
   }
 }
 

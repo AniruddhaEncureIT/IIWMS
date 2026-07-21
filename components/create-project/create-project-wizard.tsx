@@ -125,7 +125,8 @@ function validateStep(step: number, state: WizardState): Record<string, string> 
   const b = state.basicDetails;
 
   if (step === 1) {
-    if (!b.projectName?.trim())  errors.projectName    = "Work Name is required.";
+    if (!b.projectName?.trim())     errors.projectName    = "Work Name is required.";
+    if (!b.workDescription?.trim()) errors.workDescription = "Work Description is required.";
     if (!b.sanctionYear)         errors.sanctionYear   = "Please select a Sanction Year.";
     if (!b.departmentName)       errors.departmentName = "Please select a Department.";
     if (!b.majorHeadName)        errors.majorHeadName  = "Please select a Major Head.";
@@ -170,14 +171,13 @@ function validateStep(step: number, state: WizardState): Record<string, string> 
       if (!ms.itemName?.trim())   errors[`itemName_${ms.id}`]   = "Item Name is required.";
       if (!ms.rate || ms.rate <= 0) errors[`rate_${ms.id}`]     = "Rate (₹) must be greater than 0.";
     }
+    const totalAmt = state.measurements.reduce((s, m) => s + (m.amount || 0), 0);
+    if (totalAmt <= 0) errors.estimatedAmount = "Estimated Amount must be greater than ₹0. Enter at least one measurement with a valid rate and quantity.";
   }
 
   // step 6 — all fields are optional; no validation required
 
-  if (step === 7) {
-    if (!state.documentSets.drawings.length)
-      errors.drawings = "Please upload at least one Drawing.";
-  }
+  // step 7 — Upload Documents is optional; all three document types may be skipped
 
   if (step === 8) {
     if (!state.verificationChecked)
@@ -229,6 +229,7 @@ export function CreateProjectWizard() {
         workActivity: draft.workActivity ?? "",
         workDemandBy: draft.workDemandBy ?? "",
         workDemandByDocumentName: "",
+        workDescription: draft.workDescription ?? "",
       },
       subWorks: draft.subWorks?.map((sw) => ({ id: sw.id, name: sw.name })) ?? [{ id: "sw-init", name: "" }],
       leadStatements: draft.leadStatements?.map((ls) => ({
@@ -373,6 +374,7 @@ export function CreateProjectWizard() {
       taluka: b.taluka,
       gramPanchayat: b.gramPanchayat,
       workDemandBy: b.workDemandBy,
+      workDescription: b.workDescription,
       workDemandByDocument: b.workDemandByDocumentFile ? {
         id: b.workDemandByDocumentFile.id,
         name: b.workDemandByDocumentFile.name,

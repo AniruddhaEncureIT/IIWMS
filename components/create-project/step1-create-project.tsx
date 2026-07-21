@@ -102,6 +102,19 @@ export function Step1CreateProject({ data, onChange, uploadedFileName, isAutoFil
             <ErrMsg msg={errors?.projectName} />
           </div>
 
+          <div className="md:col-span-2">
+            <label className={lbl}>Work Description <span className="text-red-500">*</span></label>
+            <textarea
+              rows={3}
+              className={[fc("workDescription"), "resize-none"].join(" ")}
+              placeholder="Describe the scope of work, nature of construction, and objectives…"
+              value={data.workDescription}
+              onChange={(e) => onChange({ workDescription: e.target.value })}
+              aria-invalid={inv("workDescription")}
+            />
+            <ErrMsg msg={errors?.workDescription} />
+          </div>
+
           <div>
             <label className={lbl}>Sanction Year <span className="text-red-500">*</span></label>
             <select

@@ -43,6 +43,8 @@ import type {
   ITenderData,
   IWorkOrderData,
   IMBData,
+  IDocument,
+  ITenderGeneratedDocuments,
 } from "@/types/iims.types";
 import type { UserRole } from "@/types/auth.types";
 import { formatINR, formatCr, statusVariant, StatusBadge } from "@/components/dashboard/dash-shared";
@@ -260,6 +262,26 @@ function StageActionsCard({ project, role, onAction }: StageActionsProps) {
   const userRole = role as UserRole;
   const isStageOwner = currentStage && currentStage.ownerRole === userRole;
 
+  if (status === "Project Closed" || status === "Project Completed") {
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700">
+          <ListChecks className="w-4 h-4 text-blue-500" aria-hidden="true" />
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Available Actions</h3>
+        </div>
+        <div className="p-4">
+          <div className="flex flex-col items-center justify-center py-5 text-center">
+            <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mb-2" aria-hidden="true" />
+            <p className="text-xs font-semibold text-green-700 dark:text-green-400">Project Closed</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
+              All workflows are complete. This project is locked and read-only.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentStage) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
@@ -341,13 +363,33 @@ function StageActionsCard({ project, role, onAction }: StageActionsProps) {
   const TENDER_STAGE_IDS = ["stage-7", "stage-7b", "stage-7c", "stage-7d"];
   // Form-based stages: stage-id → route path
   const FORM_STAGE_MAP: Record<string, string> = {
-    "stage-8":  `/technical-bid/${id}`,   // TC records technical bids
-    "stage-12": `/financial-bid/${id}`,   // TC records financial bids
-    "stage-16": `/letter-of-award/${id}`, // TC issues LOI
-    "stage-20": `/work-order/${id}`,      // EE creates work order
-    "stage-23": `/mb-billing/${id}`,      // SE creates measurement book
-    "stage-24": `/mb-billing/${id}`,      // DE verifies measurement book
-    "stage-26": `/mb-billing/${id}`,      // EE approves measurement book
+    "stage-8":   `/technical-bid/${id}`,  // TC records technical bids
+    "stage-9":   `/technical-bid/${id}`,  // EE reviews technical bids
+    "stage-10":  `/technical-bid/${id}`,  // CAFO reviews technical bids
+    "stage-11":  `/technical-bid/${id}`,  // ACEO approves technical bids
+    "stage-12":  `/financial-bid/${id}`,  // TC records financial bids
+    "stage-13":  `/financial-bid/${id}`,  // EE reviews financial bids
+    "stage-14":  `/financial-bid/${id}`,  // CAFO reviews financial bids
+    "stage-15":  `/financial-bid/${id}`,  // ACEO approves financial bids
+    "stage-15b": `/gb-approval/${id}`,    // TC records GB Approval outcome
+    "stage-16":  `/letter-of-award/${id}`,// TC prepares LOI
+    "stage-17":  `/letter-of-award/${id}`,// EE reviews LOI
+    "stage-18":  `/letter-of-award/${id}`,// CAFO reviews LOI
+    "stage-19":  `/letter-of-award/${id}`,// ACEO approves LOI
+    "stage-19b": `/work-order/${id}`,     // TC prepares Work Order
+    "stage-20":  `/work-order/${id}`,     // EE reviews Work Order
+    "stage-21":  `/work-order/${id}`,     // CAFO reviews Work Order
+    "stage-22":  `/work-order/${id}`,     // ACEO approves Work Order
+    "stage-23":  `/mb-billing/${id}`,     // SE creates measurement book
+    "stage-24":  `/mb-billing/${id}`,     // DE verifies measurement book
+    "stage-25":  `/mb-billing/${id}`,     // Contractor accepts/rejects MB
+    "stage-26":  `/mb-billing/${id}`,     // EE approves measurement book
+    "stage-27":  `/mb-billing/${id}`,     // Auditor reviews measurement book
+    "stage-28":  `/mb-billing/${id}`,     // Accountant processes billing
+    "stage-29":  `/mb-billing/${id}`,     // AAO verifies bill
+    "stage-30":  `/mb-billing/${id}`,     // CAFO approves bill
+    "stage-31":  `/mb-billing/${id}`,     // ACEO reviews bill
+    "stage-32":  `/mb-billing/${id}`,     // CEO approves final bill
   };
   const isDTPStage = DTP_STAGE_IDS.includes(currentStage.id);
   const isTenderStage = TENDER_STAGE_IDS.includes(currentStage.id);
@@ -368,26 +410,67 @@ function StageActionsCard({ project, role, onAction }: StageActionsProps) {
       );
     } else if (isTenderStage) {
       // Tender stages are handled in the Tender form — navigate there instead of direct action
-      actions.push(
-        <Link
-          key="tender-nav"
-          href={`/create-tender/${id}`}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
-        >
-          <FileText className="w-4 h-4" />
-          {currentStage.ownerRole === "Tender Clerk" ? "Open Tender Form" : "Review Tender"}
-        </Link>
-      );
+      const dtpSanctioned = project.dtpData?.status === "DTP Sanctioned";
+      const tenderExists  = !!project.tenderData;
+      const tenderBlocked = !dtpSanctioned && !tenderExists;
+
+      if (tenderBlocked) {
+        actions.push(
+          <div key="tender-blocked" className="w-full space-y-2">
+            <button
+              disabled
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-sm font-medium cursor-not-allowed"
+            >
+              <FileText className="w-4 h-4" />
+              Open Tender Form
+            </button>
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+              DTP must be sanctioned before Tender Notice creation.
+            </p>
+          </div>
+        );
+      } else {
+        actions.push(
+          <Link
+            key="tender-nav"
+            href={`/create-tender/${id}`}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            {currentStage.ownerRole === "Tender Clerk" ? "Open Tender Form" : "Review Tender"}
+          </Link>
+        );
+      }
     } else if (formRoute) {
       // Other form-based stages — navigate to dedicated page
       const formLabel =
-        currentStage.id === "stage-8"  ? "Open Technical Bid" :
-        currentStage.id === "stage-12" ? "Open Financial Bid" :
-        currentStage.id === "stage-16" ? "Issue Letter of Intent" :
-        currentStage.id === "stage-20" ? "Open Work Order Form" :
-        currentStage.id === "stage-23" ? "Create Measurement Book" :
-        currentStage.id === "stage-24" ? "Review Measurement Book" :
-        currentStage.id === "stage-26" ? "Approve Measurement Book" :
+        currentStage.id === "stage-8"   ? "Open Technical Bid" :
+        currentStage.id === "stage-9"   ? "Review Technical Bid" :
+        currentStage.id === "stage-10"  ? "Review Technical Bid" :
+        currentStage.id === "stage-11"  ? "Approve Technical Bid" :
+        currentStage.id === "stage-12"  ? "Open Financial Bid" :
+        currentStage.id === "stage-13"  ? "Review Financial Bid" :
+        currentStage.id === "stage-14"  ? "Review Financial Bid" :
+        currentStage.id === "stage-15"  ? "Approve Financial Bid" :
+        currentStage.id === "stage-15b" ? "Record GB Approval" :
+        currentStage.id === "stage-16"  ? "Issue Letter of Intent" :
+        currentStage.id === "stage-17"  ? "Review Letter of Intent" :
+        currentStage.id === "stage-18"  ? "Review Letter of Intent" :
+        currentStage.id === "stage-19"  ? "Approve Letter of Intent" :
+        currentStage.id === "stage-19b" ? "Create Work Order" :
+        currentStage.id === "stage-20"  ? "Review Work Order" :
+        currentStage.id === "stage-21"  ? "Review Work Order" :
+        currentStage.id === "stage-22"  ? "Approve Work Order" :
+        currentStage.id === "stage-23"  ? "Create Measurement Book" :
+        currentStage.id === "stage-24"  ? "Review Measurement Book" :
+        currentStage.id === "stage-25"  ? "Review Measurement Book" :
+        currentStage.id === "stage-26"  ? "Approve Measurement Book" :
+        currentStage.id === "stage-27"  ? "Review Measurement Book" :
+        currentStage.id === "stage-28"  ? "Process Bill" :
+        currentStage.id === "stage-29"  ? "Verify Bill" :
+        currentStage.id === "stage-30"  ? "Approve Bill" :
+        currentStage.id === "stage-31"  ? "Review Bill" :
+        currentStage.id === "stage-32"  ? "Approve Final Bill" :
         "Open Form";
       actions.push(
         <Link
@@ -573,6 +656,22 @@ export function ProjectDetailsView({ projectId }: Props) {
         </div>
       </div>
 
+      {/* Project Closed banner */}
+      {(project.status === "Project Closed" || project.status === "Project Completed") && (
+        <div className="flex items-center gap-3 px-4 py-3 mb-6 bg-green-50 dark:bg-green-900/15 border border-green-200 dark:border-green-700 rounded-xl">
+          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" aria-hidden="true" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-green-800 dark:text-green-300">Project Closed</p>
+            <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">
+              All workflows are complete. This project is locked and read-only.
+            </p>
+          </div>
+          <span className="shrink-0 px-3 py-1.5 text-xs font-semibold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-lg">
+            Read-only
+          </span>
+        </div>
+      )}
+
       {/* Role-aware action banner */}
       {isStageOwnerForBanner && currentStageForBanner && (
         <div className="flex items-center gap-3 px-4 py-3 mb-6 bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800 rounded-xl">
@@ -669,13 +768,25 @@ export function ProjectDetailsView({ projectId }: Props) {
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{project.workDemandByDocument.name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Uploaded on {new Date(project.workDemandByDocument.uploadedAt).toLocaleDateString()}</p>
                           </div>
-                          <button
-                            type="button"
-                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
-                            aria-label="Download document"
+                          {project.workDemandByDocument.url && (
+                            <a
+                              href={project.workDemandByDocument.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="View document"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </a>
+                          )}
+                          <a
+                            href={project.workDemandByDocument.url}
+                            download={project.workDemandByDocument.name}
+                            className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                            title="Download document"
                           >
                             <Download className="w-4 h-4" />
-                          </button>
+                          </a>
                         </div>
                       </div>
                     )}
@@ -952,6 +1063,49 @@ export function ProjectDetailsView({ projectId }: Props) {
                   <p className="text-xs text-amber-700 dark:text-amber-400">{dtpData.remarks}</p>
                 </div>
               )}
+              {(dtpData.createdBy || dtpData.verifiedBy || dtpData.approvedBy) && (
+                <>
+                  <SectionDivider label="Approval Chain" />
+                  <InfoGrid>
+                    {infoRow("Created By", dtpData.createdBy)}
+                    {infoRow("Created At", fmtDate(dtpData.createdAt))}
+                    {infoRow("Verified By", dtpData.verifiedBy)}
+                    {infoRow("Verified At", fmtDate(dtpData.verifiedAt))}
+                    {infoRow("Approved By", dtpData.approvedBy)}
+                    {infoRow("Approved At", fmtDate(dtpData.approvedAt))}
+                  </InfoGrid>
+                </>
+              )}
+              {dtpData.documents && dtpData.documents.length > 0 && (
+                <>
+                  <SectionDivider label="Supporting Documents" />
+                  <ul className="space-y-2">
+                    {dtpData.documents.map((doc, i) => (
+                      <li key={doc.id ?? i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                        <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{doc.name}</p>
+                          {doc.uploadedAt && <p className="text-xs text-gray-400">{fmtDate(doc.uploadedAt)}{doc.uploadedBy ? ` · ${doc.uploadedBy}` : ""}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {doc.url && (
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                              className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                              <Eye className="w-4 h-4" />
+                            </a>
+                          )}
+                          {doc.url && (
+                            <a href={doc.url} download={doc.name}
+                              className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                              <Download className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </Accordion>
           )}
 
@@ -977,16 +1131,70 @@ export function ProjectDetailsView({ projectId }: Props) {
                 {infoRow("Eligibility Criteria", tenderData.eligibilityCriteria)}
                 {infoRow("Completion Period", tenderData.completionPeriod)}
                 {infoRow("MahaTender Ref.", tenderData.mahaTenderReferenceId)}
+                {infoRow("Created By", tenderData.createdBy)}
+                {infoRow("Created At", fmtDate(tenderData.createdAt))}
                 {infoRow("EE Approved By", tenderData.eeApprovedBy)}
                 {infoRow("CAFO Approved By", tenderData.cafoApprovedBy)}
+                {infoRow("Additional CEO Approved By", tenderData.additionalCeoApprovedBy)}
               </InfoGrid>
+
+              {/* Generated Documents */}
+              {tenderData.generatedDocuments && (() => {
+                const defs: { key: keyof ITenderGeneratedDocuments; label: string }[] = [
+                  { key: "tenderNotice",      label: "Tender Notice" },
+                  { key: "scheduleB",         label: "Schedule B / BOQ" },
+                  { key: "technicalSanction", label: "Technical Sanction" },
+                  { key: "abstract",          label: "Abstract" },
+                ];
+                const docs = defs.map(d => ({ ...d, doc: tenderData.generatedDocuments![d.key] })).filter(d => d.doc);
+                if (docs.length === 0) return null;
+                return (
+                  <>
+                    <SectionDivider label="Generated Documents" />
+                    <ul className="space-y-2">
+                      {docs.map(({ key, label, doc }) => (
+                        <li key={key} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg">
+                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{label}</p>
+                            {doc!.uploadedAt && (
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                {fmtDate(doc!.uploadedAt)}{doc!.uploadedBy ? ` · ${doc!.uploadedBy}` : ""}
+                              </p>
+                            )}
+                          </div>
+                          {doc!.url && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <a href={doc!.url} target="_blank" rel="noopener noreferrer"
+                                className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                title="View">
+                                <Eye className="w-4 h-4" />
+                              </a>
+                              <a href={doc!.url} download={doc!.name}
+                                className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                                title="Download">
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              })()}
 
               {/* Technical Bid */}
               {tenderData.technicalBid && (
                 <>
                   <SectionDivider label="Technical Bid" />
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-500 mb-2">{tenderData.technicalBid.officeNote}</p>
+                    {tenderData.technicalBid.officeNote && (
+                      <p className="text-xs text-gray-500 mb-2">{tenderData.technicalBid.officeNote}</p>
+                    )}
+                    {tenderData.technicalBid.approvedBy && (
+                      <p className="text-xs text-gray-500">Approved by: <span className="font-medium text-gray-700 dark:text-gray-300">{tenderData.technicalBid.approvedBy}</span></p>
+                    )}
                     {tenderData.technicalBid.bidders.length > 0 && (
                       <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
                         <table className="w-full text-xs">
@@ -1010,6 +1218,33 @@ export function ProjectDetailsView({ projectId }: Props) {
                         </table>
                       </div>
                     )}
+                    {tenderData.technicalBid.documents.length > 0 && (
+                      <ul className="space-y-2 mt-2">
+                        {tenderData.technicalBid.documents.map((doc, i) => (
+                          <li key={doc.id ?? i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                            <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{doc.name}</p>
+                              {doc.uploadedAt && <p className="text-xs text-gray-400">{fmtDate(doc.uploadedAt)}{doc.uploadedBy ? ` · ${doc.uploadedBy}` : ""}</p>}
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {doc.url && (
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                                  className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                              )}
+                              {doc.url && (
+                                <a href={doc.url} download={doc.name}
+                                  className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </>
               )}
@@ -1022,25 +1257,158 @@ export function ProjectDetailsView({ projectId }: Props) {
                     {infoRow("L1 Bidder", tenderData.financialBid.l1Bidder?.name)}
                     {infoRow("L1 Quoted %", tenderData.financialBid.l1Bidder?.quotedPercentage != null ? `${tenderData.financialBid.l1Bidder.quotedPercentage}%` : undefined)}
                     {infoRow("L2 Bidder", tenderData.financialBid.l2Bidder?.name)}
+                    {infoRow("L2 Quoted %", tenderData.financialBid.l2Bidder?.quotedPercentage != null ? `${tenderData.financialBid.l2Bidder.quotedPercentage}%` : undefined)}
                     {infoRow("L3 Bidder", tenderData.financialBid.l3Bidder?.name)}
+                    {infoRow("L3 Quoted %", tenderData.financialBid.l3Bidder?.quotedPercentage != null ? `${tenderData.financialBid.l3Bidder.quotedPercentage}%` : undefined)}
+                    {infoRow("Approved By", tenderData.financialBid.approvedBy)}
                   </InfoGrid>
-                  <p className="text-xs text-gray-500 mt-2">{tenderData.financialBid.officeNote}</p>
+                  {tenderData.financialBid.officeNote && (
+                    <p className="text-xs text-gray-500 mt-2">{tenderData.financialBid.officeNote}</p>
+                  )}
+                  {tenderData.financialBid.gbResolution && (
+                    <div className="mt-3">
+                      <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">GB Resolution Document</p>
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                        <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{tenderData.financialBid.gbResolution.name}</p>
+                          {tenderData.financialBid.gbResolution.uploadedAt && (
+                            <p className="text-xs text-gray-400">{fmtDate(tenderData.financialBid.gbResolution.uploadedAt)}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {tenderData.financialBid.gbResolution.url && (
+                            <>
+                              <a href={tenderData.financialBid.gbResolution.url} target="_blank" rel="noopener noreferrer"
+                                className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                                <Eye className="w-4 h-4" />
+                              </a>
+                              <a href={tenderData.financialBid.gbResolution.url} download={tenderData.financialBid.gbResolution.name}
+                                className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
-              {/* LOA */}
-              {tenderData.loa && (
-                <>
-                  <SectionDivider label="Letter of Intent" />
-                  <InfoGrid>
-                    {infoRow("L1 Contractor", tenderData.loa.l1Contractor)}
-                    {infoRow("Approved %", `${tenderData.loa.approvedPercentage}%`)}
-                    {infoRow("Approved Amount", formatINR(tenderData.loa.approvedAmount))}
-                    {infoRow("Completion Period", tenderData.loa.completionPeriod)}
-                    {infoRow("Issued Date", fmtDate(tenderData.loa.issuedDate))}
-                  </InfoGrid>
-                </>
-              )}
+            </Accordion>
+          )}
+
+          {/* GB Approval Accordion */}
+          {tenderData?.gbApproval && (
+            <Accordion
+              id="gb-approval"
+              title="GB Approval"
+              icon={<ClipboardList className="w-5 h-5" />}
+              badge={<StatusBadge status={tenderData.gbApproval.submittedAt ? "Approved" : "Pending"} />}
+            >
+              <InfoGrid>
+                {infoRow("L1 Contractor", tenderData.gbApproval.l1Contractor)}
+                {infoRow("Approved Rate", tenderData.gbApproval.percentageType === "Equal"
+                  ? "At Estimated Cost (0%)"
+                  : `${tenderData.gbApproval.aboveBelowPercentage.toFixed(2)}% ${tenderData.gbApproval.percentageType}`)}
+                {infoRow("Remarks", tenderData.gbApproval.remarks)}
+                {infoRow("Submitted By", tenderData.gbApproval.submittedBy)}
+                {infoRow("Submitted At", fmtDate(tenderData.gbApproval.submittedAt))}
+              </InfoGrid>
+              {([
+                { doc: tenderData.gbApproval.gbResolutionDoc,  label: "GB Resolution Document" },
+                { doc: tenderData.gbApproval.approvalLetterDoc, label: "Approval Letter" },
+              ] as const).map(({ doc, label }) => doc && (
+                <div key={label} className="mt-3">
+                  <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{label}</p>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                    <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{doc.name}</p>
+                      {doc.uploadedAt && <p className="text-xs text-gray-400">{fmtDate(doc.uploadedAt)}{doc.uploadedBy ? ` · ${doc.uploadedBy}` : ""}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {doc.url && (
+                        <>
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                            <Eye className="w-4 h-4" />
+                          </a>
+                          <a href={doc.url} download={doc.name}
+                            className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                            <Download className="w-4 h-4" />
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </Accordion>
+          )}
+
+          {/* Letter of Intent (LOI) Accordion */}
+          {tenderData?.loa && (
+            <Accordion
+              id="loi"
+              title="Letter of Intent (LOI)"
+              icon={<Send className="w-5 h-5" />}
+              badge={<StatusBadge status={tenderData.loa.status} />}
+            >
+              <InfoGrid>
+                {infoRow("L1 Contractor", tenderData.loa.l1Contractor)}
+                {infoRow("Approved Percentage", `${tenderData.loa.approvedPercentage}%`)}
+                {infoRow("Approved Amount", formatINR(tenderData.loa.approvedAmount))}
+                {infoRow("Completion Period", tenderData.loa.completionPeriod)}
+                {infoRow("Issue Date", fmtDate(tenderData.loa.issuedDate))}
+                {infoRow("Current Status", tenderData.loa.status)}
+              </InfoGrid>
+
+              {/* LOI Documents */}
+              {(() => {
+                const loiDocs: { doc: IDocument; label: string; color: string }[] = [];
+                if (tenderData.gbApproval?.gbResolutionDoc)
+                  loiDocs.push({ doc: tenderData.gbApproval.gbResolutionDoc,  label: "GB Resolution Copy",  color: "text-blue-500" });
+                if (tenderData.gbApproval?.approvalLetterDoc)
+                  loiDocs.push({ doc: tenderData.gbApproval.approvalLetterDoc, label: "Approval Letter",      color: "text-blue-500" });
+                if (tenderData.loa.documents.length > 0)
+                  tenderData.loa.documents.forEach((d) =>
+                    loiDocs.push({ doc: d, label: "Signed LOI", color: "text-green-500" })
+                  );
+                if (loiDocs.length === 0) return null;
+                return (
+                  <>
+                    <SectionDivider label="Documents" />
+                    <ul className="space-y-2">
+                      {loiDocs.map(({ doc, label, color }, i) => (
+                        <li key={doc.id ?? i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                          <FileText className={`w-4 h-4 ${color} flex-shrink-0`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{doc.name}</p>
+                            {doc.uploadedAt && <p className="text-xs text-gray-400">{fmtDate(doc.uploadedAt)}{doc.uploadedBy ? ` · ${doc.uploadedBy}` : ""}</p>}
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {doc.url && (
+                              <>
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                                  className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a href={doc.url} download={doc.name}
+                                  className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              })()}
             </Accordion>
           )}
 
@@ -1062,15 +1430,22 @@ export function ProjectDetailsView({ projectId }: Props) {
                     {formatINR(workOrderData.contractAmount)}
                   </dd>
                 </div>
+                {infoRow("Bid %", workOrderData.bidPercentage != null ? `${workOrderData.bidPercentage}% ${workOrderData.percentageType ?? ""}`.trim() : undefined)}
+                {infoRow("L1 Bid Amount", workOrderData.l1BidAmount ? formatINR(workOrderData.l1BidAmount) : undefined)}
                 {infoRow("GST Number", workOrderData.contractorGST)}
                 {infoRow("Contractor Address", workOrderData.contractorAddress)}
                 {infoRow("Completion Period", workOrderData.completionPeriod)}
                 {infoRow("Commencement Date", fmtDate(workOrderData.commencementDate))}
                 {infoRow("Work Completion Date", fmtDate(workOrderData.workCompletionDate))}
                 {infoRow("Security Deposit", workOrderData.securityDeposit ? formatINR(workOrderData.securityDeposit) : undefined)}
+                {infoRow("Security Deposit %", workOrderData.securityDepositPercentage != null ? `${workOrderData.securityDepositPercentage}%` : undefined)}
                 {typeof workOrderData.performanceGuarantee === "number"
                   ? infoRow("Performance Guarantee", formatINR(workOrderData.performanceGuarantee))
                   : null}
+                {infoRow("Demand Draft No.", workOrderData.demandDraftNumber)}
+                {infoRow("Demand Draft Date", fmtDate(workOrderData.demandDraftDate))}
+                {infoRow("EE Approved By", workOrderData.eeApprovedBy)}
+                {infoRow("EE Approved At", fmtDate(workOrderData.eeApprovedAt))}
                 {infoRow("Issued By", workOrderData.issuedBy)}
               </InfoGrid>
               {workOrderData.clauses && (
@@ -1079,6 +1454,46 @@ export function ProjectDetailsView({ projectId }: Props) {
                   <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{workOrderData.clauses}</p>
                 </div>
               )}
+              {(() => {
+                const pgDoc = typeof workOrderData.performanceGuarantee === "object" && workOrderData.performanceGuarantee !== null
+                  ? (workOrderData.performanceGuarantee as IDocument)
+                  : null;
+                const agDoc = workOrderData.agreement ?? null;
+                const docPairs: { label: string; doc: IDocument }[] = [];
+                if (pgDoc) docPairs.push({ label: "Performance Guarantee Document", doc: pgDoc });
+                if (agDoc) docPairs.push({ label: "Signed Agreement Document", doc: agDoc });
+                if (docPairs.length === 0) return null;
+                return (
+                  <>
+                    <SectionDivider label="Work Order Documents" />
+                    <ul className="space-y-2">
+                      {docPairs.map(({ label, doc }) => (
+                        <li key={doc.id ?? label} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-lg">
+                          <FileText className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{doc.name}</p>
+                            <p className="text-xs text-gray-400">{label}{doc.uploadedAt ? ` · ${fmtDate(doc.uploadedAt)}` : ""}</p>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {doc.url && (
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                                className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            )}
+                            {doc.url && (
+                              <a href={doc.url} download={doc.name}
+                                className="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Download">
+                                <Download className="w-4 h-4" />
+                              </a>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              })()}
             </Accordion>
           )}
 
@@ -1100,39 +1515,112 @@ export function ProjectDetailsView({ projectId }: Props) {
                       </div>
                       <StatusBadge status={mb.status} />
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                      {mb.billType && (
+                        <div>
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bill Type</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300">{mb.billType}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Work Amount</p>
                         <p className="font-semibold text-gray-800 dark:text-gray-200">{mb.totalWorkAmount ? formatINR(mb.totalWorkAmount) : "—"}</p>
                       </div>
-                      {mb.deductions && (
-                        <div>
-                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Deductions</p>
-                          <p className="font-semibold text-red-600 dark:text-red-400">
-                            {formatINR(
-                              (mb.deductions.incomeTax ?? 0) +
-                              (mb.deductions.gstTds ?? 0) +
-                              (mb.deductions.labourCess ?? 0) +
-                              (mb.deductions.securityDeposit ?? 0) +
-                              (mb.deductions.mobilizationAdvance ?? 0) +
-                              (mb.deductions.penalty ?? 0)
-                            )}
-                          </p>
-                        </div>
-                      )}
                       <div>
                         <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Net Payable</p>
                         <p className="font-bold text-green-600 dark:text-green-400">{mb.netPayable ? formatINR(mb.netPayable) : "—"}</p>
                       </div>
+                      {mb.createdBy && (
+                        <div>
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Created By</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{mb.createdBy}</p>
+                        </div>
+                      )}
+                      {mb.deVerifiedBy && (
+                        <div>
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Verified by DE</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{mb.deVerifiedBy}{mb.deVerifiedAt ? ` · ${fmtDate(mb.deVerifiedAt)}` : ""}</p>
+                        </div>
+                      )}
+                      {mb.eeVerifiedBy && (
+                        <div>
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Approved by EE</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{mb.eeVerifiedBy}{mb.eeVerifiedAt ? ` · ${fmtDate(mb.eeVerifiedAt)}` : ""}</p>
+                        </div>
+                      )}
                     </div>
+                    {mb.deductions && (
+                      <div className="mb-3">
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Deductions</p>
+                        <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                          <table className="w-full text-xs">
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                              {[
+                                ["Income Tax", mb.deductions.incomeTax],
+                                ["GST TDS", mb.deductions.gstTds],
+                                ["Labour Cess", mb.deductions.labourCess],
+                                ["Security Deposit", mb.deductions.securityDeposit],
+                                ["Mobilization Advance", mb.deductions.mobilizationAdvance],
+                                ["Penalty", mb.deductions.penalty],
+                              ].filter(([, v]) => (v as number) > 0).map(([label, val]) => (
+                                <tr key={label as string} className="bg-white dark:bg-gray-800">
+                                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{label as string}</td>
+                                  <td className="px-3 py-2 text-right font-medium text-red-600 dark:text-red-400">{formatINR(val as number)}</td>
+                                </tr>
+                              ))}
+                              <tr className="bg-red-50 dark:bg-red-900/10">
+                                <td className="px-3 py-2 font-semibold text-red-700 dark:text-red-400">Total Deductions</td>
+                                <td className="px-3 py-2 text-right font-bold text-red-700 dark:text-red-400">
+                                  {formatINR(
+                                    (mb.deductions.incomeTax ?? 0) + (mb.deductions.gstTds ?? 0) +
+                                    (mb.deductions.labourCess ?? 0) + (mb.deductions.securityDeposit ?? 0) +
+                                    (mb.deductions.mobilizationAdvance ?? 0) + (mb.deductions.penalty ?? 0)
+                                  )}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                     {mb.measurements.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs text-gray-400 mb-1">{mb.measurements.length} measurement entries</p>
+                      <div className="mb-3">
+                        <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Measurements ({mb.measurements.length} entries)</p>
+                        <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                          <table className="w-full text-xs">
+                            <thead className="bg-gray-50 dark:bg-gray-900">
+                              <tr>
+                                {["Item", "Description", "Date", "L", "B", "H", "Qty", "Rate ₹", "Amount ₹"].map((h) => (
+                                  <th key={h} className="px-2 py-2 text-left text-gray-500 font-semibold uppercase whitespace-nowrap">{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                              {mb.measurements.map((m, mi) => (
+                                <tr key={m.id ?? mi} className="bg-white dark:bg-gray-800">
+                                  <td className="px-2 py-1.5 font-mono text-blue-600 dark:text-blue-400">{m.itemNo}</td>
+                                  <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300 max-w-[120px] truncate">{m.description}</td>
+                                  <td className="px-2 py-1.5 text-gray-500 whitespace-nowrap">{fmtDate(m.dateOfMeasurement)}</td>
+                                  <td className="px-2 py-1.5 text-gray-500">{m.length}</td>
+                                  <td className="px-2 py-1.5 text-gray-500">{m.breadth}</td>
+                                  <td className="px-2 py-1.5 text-gray-500">{m.height}</td>
+                                  <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{m.quantity?.toFixed(3)}</td>
+                                  <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatINR(m.rate)}</td>
+                                  <td className="px-2 py-1.5 font-semibold text-gray-800 dark:text-gray-200">{formatINR(m.itemAmount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                     {mb.remarks && mb.remarks.length > 0 && (
-                      <div className="mt-2 px-3 py-1.5 border-l-2 border-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded-r-lg">
-                        <p className="text-xs text-amber-700 dark:text-amber-400">{mb.remarks[mb.remarks.length - 1]}</p>
+                      <div className="mt-2 space-y-1">
+                        {mb.remarks.map((r, ri) => (
+                          <div key={ri} className="px-3 py-1.5 border-l-2 border-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded-r-lg">
+                            <p className="text-xs text-amber-700 dark:text-amber-400">{r}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                     <Link

@@ -63,7 +63,7 @@ const ROLE_DOCUMENTS: Record<string, string[]> = {
   "Sectional Engineer":                  ["Project Estimates", "DTP Documents"],
   "Deputy Engineer":                     ["Project Estimates", "DTP Documents", "Tender Documents"],
   "Executive Engineer":                  ["Project Estimates", "DTP Documents", "Tender Documents", "Work Orders", "MB Reports"],
-  "Tender Clerk":                        ["DTP Documents", "Tender Documents", "LOA Documents"],
+  "Tender Clerk":                        ["DTP Documents", "Tender Documents", "LOI Documents"],
   "Auditor":                             ["MB Reports", "Audit Reports"],
   "Accountant":                          ["MB Reports", "Financial Reports"],
   "Assistant Accounts Officer":          ["MB Reports", "Financial Reports"],
@@ -71,7 +71,7 @@ const ROLE_DOCUMENTS: Record<string, string[]> = {
   "Additional Chief Executive Officer":  ["All Documents (read-only)"],
   "Chief Executive Officer":             ["All Documents (read-only)"],
   "System Administrator":                ["Admin & Configuration Documents", "Templates", "Rate Item Schedules"],
-  "Contractor":                          ["LOA", "Work Order", "Measurement Books (assigned to you)"],
+  "Contractor":                          ["LOI", "Work Order", "Measurement Books (assigned to you)"],
   "Technical System Configurator":       ["Templates", "Rate Item Schedules"],
 };
 
@@ -81,7 +81,7 @@ const TOPIC_MAP: Array<{ module: string; keywords: string[] }> = [
   { module: "dtp",              keywords: ["dtp", "draft tender paper", "tender paper"] },
   { module: "tender",           keywords: ["tender schedule", "tender id", "publish tender", "mahatender", "e-tender", "tender notice", "technical bid", "financial bid", "bid evaluation", "bids received", "my tenders", "tender queue", "tenders assigned", "tender detail"] },
   { module: "bids",             keywords: ["bidder list", "l1 bidder", "l1 determination", "quoted percentage", "bid list"] },
-  { module: "loa",              keywords: ["loa", "letter of award", "l1 contractor"] },
+  { module: "loa",              keywords: ["loa", "loi", "letter of intent", "letter of award", "l1 contractor"] },
   { module: "work-order",       keywords: ["work order", "commencement", "security deposit", "performance guarantee"] },
   { module: "mb",               keywords: ["measurement book", "mb pending", "mb verification", "verify mb", "mb audit", "mb record", "running bill", "deduction", "audit observation", "mb accept", "which mb", "mb for project", "show mb", "mb details", "mb status", "my bills", "my mbs", "bill status", "how many mbs", "mb count"] },
   { module: "payments",         keywords: ["payment status", "bill payment", "disbursement", "net payable", "bill processing", "process payment", "bills under", "payment pending", "my payments", "bills pending", "payment processed", "payment history", "how much paid", "total payment", "payment amount"] },
@@ -133,7 +133,7 @@ function handleProjects(lower: string, role: string, firstName: string, projects
     const loa = projects.filter((p) => p.tenderData?.loa && !p.workOrderData);
     let r = "";
     if (wo.length)  r += `**Active Work Orders (${wo.length}):**\n${wo.slice(0,5).map((p) => `• **${p.id}** – ${p.projectName} (${p.status})`).join("\n")}\n\n`;
-    if (loa.length) r += `**LOA Issued, Work Order Pending (${loa.length}):**\n${loa.slice(0,3).map((p) => `• **${p.id}** – ${p.projectName}`).join("\n")}`;
+    if (loa.length) r += `**LOI Issued, Work Order Pending (${loa.length}):**\n${loa.slice(0,3).map((p) => `• **${p.id}** – ${p.projectName}`).join("\n")}`;
     return r || `No active projects assigned to you, ${firstName}.`;
   }
   // Drafts sub-query
@@ -311,31 +311,31 @@ function handleTender(lower: string, role: string, firstName: string, projects: 
 function handleLOA(lower: string, role: string, firstName: string, projects: ReturnType<typeof getAccessibleProjects>, actions: INotification[]): string {
   const loaProjects = projects.filter((p) => p.tenderData?.loa);
   if (role === "Tender Clerk") {
-    if (!loaProjects.length) return `No LOAs issued yet, ${firstName}.`;
-    return `LOA-issued projects (${loaProjects.length}):\n${loaProjects.slice(0,5).map((p) => {
+    if (!loaProjects.length) return `No LOIs issued yet, ${firstName}.`;
+    return `LOI-issued projects (${loaProjects.length}):\n${loaProjects.slice(0,5).map((p) => {
       const loa = p.tenderData!.loa!;
       return `• **${p.id}** – ${p.projectName}\n  Contractor: ${loa.l1Contractor} | Amount: ${fmt(toLakh(loa.approvedAmount))} | Status: ${loa.status}`;
     }).join("\n")}`;
   }
   if (role === "Executive Engineer") {
-    const pending = actions.filter((n) => n.id.startsWith("ee-loa") || n.title.toLowerCase().includes("loa"));
-    if (!pending.length) return `No LOA issuance actions pending, ${firstName}.`;
-    return `LOA actions pending:\n${pending.slice(0,5).map((n) => `• **${n.title}**: ${n.message}`).join("\n")}`;
+    const pending = actions.filter((n) => n.id.startsWith("ee-loa") || n.title.toLowerCase().includes("loi") || n.title.toLowerCase().includes("loa"));
+    if (!pending.length) return `No LOI issuance actions pending, ${firstName}.`;
+    return `LOI actions pending:\n${pending.slice(0,5).map((n) => `• **${n.title}**: ${n.message}`).join("\n")}`;
   }
   if (role === "Additional Chief Executive Officer") {
-    const pending = actions.filter((n) => n.title.toLowerCase().includes("loa") || n.id.includes("loa"));
-    if (!pending.length) return `No LOA approvals pending, ${firstName}.`;
-    return `LOA approvals pending your sign-off:\n${pending.slice(0,5).map((n) => `• **${n.title}**: ${n.message}`).join("\n")}`;
+    const pending = actions.filter((n) => n.title.toLowerCase().includes("loi") || n.title.toLowerCase().includes("loa") || n.id.includes("loa"));
+    if (!pending.length) return `No LOI approvals pending, ${firstName}.`;
+    return `LOI approvals pending your sign-off:\n${pending.slice(0,5).map((n) => `• **${n.title}**: ${n.message}`).join("\n")}`;
   }
   if (role === "Contractor") {
-    if (!loaProjects.length) return `No LOAs issued to you yet, ${firstName}.`;
-    return `LOAs issued to you (${loaProjects.length}):\n${loaProjects.slice(0,5).map((p) => {
+    if (!loaProjects.length) return `No LOIs issued to you yet, ${firstName}.`;
+    return `LOIs issued to you (${loaProjects.length}):\n${loaProjects.slice(0,5).map((p) => {
       const loa = p.tenderData!.loa!;
       return `• **${p.id}** – ${p.projectName} | ${fmt(toLakh(loa.approvedAmount))} | ${loa.status}`;
     }).join("\n")}`;
   }
-  if (!loaProjects.length) return `No LOA information found, ${firstName}.`;
-  return `LOA status (${loaProjects.length} project${loaProjects.length !== 1 ? "s" : ""}):\n${loaProjects.slice(0,5).map((p) => `• **${p.id}** – ${p.projectName}: ${p.tenderData!.loa!.status}`).join("\n")}`;
+  if (!loaProjects.length) return `No LOI information found, ${firstName}.`;
+  return `LOI status (${loaProjects.length} project${loaProjects.length !== 1 ? "s" : ""}):\n${loaProjects.slice(0,5).map((p) => `• **${p.id}** – ${p.projectName}: ${p.tenderData!.loa!.status}`).join("\n")}`;
 }
 
 function handleWorkOrder(lower: string, role: string, firstName: string, projects: ReturnType<typeof getAccessibleProjects>, actions: INotification[]): string {
@@ -365,13 +365,13 @@ function handleMB(lower: string, role: string, firstName: string, projects: Retu
   if (hit(lower, ["how many", "count of", "number of"])) {
     let count = 0; let label = "";
     if (role === "Deputy Engineer") {
-      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Submitted to DE")).length;
+      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending Measurement Verification")).length;
       label = "pending your verification";
     } else if (role === "Executive Engineer") {
-      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Verified by DE")).length;
+      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending Measurement Approval")).length;
       label = "pending your approval";
     } else if (role === "Auditor") {
-      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending at Auditor")).length;
+      count = projects.filter((p) => p.mbData?.some((m) => m.status === "Approved by EE")).length;
       label = "pending audit scrutiny";
     } else if (["Accountant", "Assistant Accounts Officer", "Chief Accounts and Finance Officer"].includes(role)) {
       count = projects.filter((p) => p.mbData?.some((m) => m.status?.includes("Accountant") || m.status === "Approved by EE")).length;
@@ -390,26 +390,26 @@ function handleMB(lower: string, role: string, firstName: string, projects: Retu
     return `Your MB records (${seP.length} project${seP.length !== 1 ? "s" : ""}):\n${seP.slice(0,5).map((p) => `• **${p.id}** – ${p.projectName}: ${p.mbData!.length} MB (Latest: ${p.mbData!.at(-1)!.status})`).join("\n")}`;
   }
   if (role === "Deputy Engineer") {
-    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Submitted to DE"));
+    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending Measurement Verification"));
     if (!pending.length) return `No MBs pending your verification, ${firstName}.`;
     return `MBs pending your 100% verification (${pending.length}):\n${pending.slice(0,5).map((p) => {
-      const mb = p.mbData!.find((m) => m.status === "Submitted to DE")!;
+      const mb = p.mbData!.find((m) => m.status === "Pending Measurement Verification")!;
       return `• **${p.id}** – ${p.projectName}\n  ${mb.mbNumber} | ${fmt(toLakh(mb.totalWorkAmount ?? 0))}`;
     }).join("\n")}`;
   }
   if (role === "Executive Engineer") {
-    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Verified by DE"));
+    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending Measurement Approval"));
     if (!pending.length) return `No MBs pending your 5% approval check, ${firstName}.`;
     return `MBs pending your approval (${pending.length}):\n${pending.slice(0,5).map((p) => {
-      const mb = p.mbData!.find((m) => m.status === "Verified by DE")!;
+      const mb = p.mbData!.find((m) => m.status === "Pending Measurement Approval")!;
       return `• **${p.id}** – ${p.projectName}\n  ${mb.mbNumber} | Net Payable: ${fmt(toLakh(mb.netPayable ?? 0))}`;
     }).join("\n")}`;
   }
   if (role === "Auditor") {
-    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Pending at Auditor"));
+    const pending = projects.filter((p) => p.mbData?.some((m) => m.status === "Approved by EE"));
     if (!pending.length) return `Audit queue is clear, ${firstName}. No MBs pending scrutiny.`;
     return `MBs pending your audit scrutiny (${pending.length}):\n${pending.slice(0,5).map((p) => {
-      const mb = p.mbData!.find((m) => m.status === "Pending at Auditor")!;
+      const mb = p.mbData!.find((m) => m.status === "Approved by EE")!;
       return `• **${p.id}** – ${p.projectName}\n  ${mb.mbNumber} | Amount: ${fmt(toLakh(mb.totalWorkAmount ?? 0))}`;
     }).join("\n")}`;
   }
@@ -452,7 +452,7 @@ function handlePayments(lower: string, role: string, firstName: string, projects
     if (hit(lower, ["total pending", "total amount", "pending payment amount", "financial summary", "how much pending", "aggregate", "total bills"])) {
       const pendingMBs = projects.flatMap((p) =>
         (p.mbData ?? [])
-          .filter((m) => m.status?.includes("Accountant") || m.status === "Approved by EE" || m.status === "Pending at Auditor")
+          .filter((m) => m.status?.includes("Accountant") || m.status === "Approved by EE")
           .map((m) => ({ mb: m, project: p }))
       );
       const total = pendingMBs.reduce((s, { mb }) => s + (mb.netPayable ?? 0), 0);
@@ -595,7 +595,7 @@ const ROLE_KNOWLEDGE: Record<string, { description: string; responsibilities: st
     description: "Provides technical and administrative oversight — approves DTP, issues Work Orders, and performs MB spot-checks.",
     responsibilities: [
       "Approves or rejects DTP documents",
-      "Issues Work Orders to L1 contractors after LOA",
+      "Issues Work Orders to L1 contractors after LOI",
       "Performs 5% spot-check verification of Measurement Books",
       "Approves LOI (Letter of Intent) issuance",
       "Oversees financial bid evaluation and tender results",
@@ -603,13 +603,13 @@ const ROLE_KNOWLEDGE: Record<string, { description: string; responsibilities: st
     reports: "Additional Chief Executive Officer",
   },
   "Tender Clerk": {
-    description: "Manages the tendering process — from publishing the tender notice to evaluating bids and issuing the LOA.",
+    description: "Manages the tendering process — from publishing the tender notice to evaluating bids and issuing the LOI.",
     responsibilities: [
       "Publishes tender notices on MahaTender portal",
       "Sets tender schedule (dates, EMD amount, tender fees)",
       "Evaluates technical and financial bids",
       "Determines the L1 (lowest-quoted) bidder",
-      "Prepares the Letter of Intent (LOA) for EE approval",
+      "Prepares the Letter of Intent (LOI) for EE approval",
     ],
     reports: "Executive Engineer",
   },
@@ -652,12 +652,12 @@ const ROLE_KNOWLEDGE: Record<string, { description: string; responsibilities: st
     reports: "Chief Executive Officer",
   },
   "Additional Chief Executive Officer": {
-    description: "Provides executive oversight — gives final approval for DTP sanction and LOA, and reviews high-level project status.",
+    description: "Provides executive oversight — gives final approval for DTP sanction and LOI, and reviews high-level project status.",
     responsibilities: [
       "Final sanction of DTP (Draft Tender Paper) documents",
-      "Approves Letter of Intent (LOA) to L1 contractors",
+      "Approves Letter of Intent (LOI) to L1 contractors",
       "Reviews overall project portfolio and status",
-      "Final sign-off in the DTP and LOA approval chains",
+      "Final sign-off in the DTP and LOI approval chains",
     ],
     reports: "Chief Executive Officer",
   },
@@ -676,7 +676,7 @@ const ROLE_KNOWLEDGE: Record<string, { description: string; responsibilities: st
       "Assigns roles, designations, and divisions",
       "Configures approval chains and workflow sequences",
       "Manages charge rates (GST, Labour Cess, Insurance, etc.)",
-      "Manages document templates (DTP, LOA, Work Order, MB)",
+      "Manages document templates (DTP, LOI, Work Order, MB)",
       "Manages Rate Item schedules (SSR and DSR)",
       "Configures system settings and organizational hierarchy",
     ],
@@ -684,7 +684,7 @@ const ROLE_KNOWLEDGE: Record<string, { description: string; responsibilities: st
   "Contractor": {
     description: "External party who executes work under an issued Work Order and submits Measurement Books for payment processing.",
     responsibilities: [
-      "Reviews issued Work Orders and LOAs assigned to them",
+      "Reviews issued Work Orders and LOIs assigned to them",
       "Accepts or returns Measurement Books submitted by the SE",
       "Tracks payment bill status",
     ],
@@ -742,7 +742,7 @@ const WORKFLOW_STAGES: Array<{ status: string; description: string; handledBy: s
   { status: "dtp approved by ee",             description: "DTP approved by EE and forwarded to the Additional CEO for final sanction.",                                                handledBy: "Additional Chief Executive Officer", nextStep: "Additional CEO grants final DTP sanction" },
   { status: "dtp sanctioned",                 description: "DTP has received final sanction from the Additional CEO. Tender Clerk can now publish the tender on MahaTender.",           handledBy: "Tender Clerk",                       nextStep: "Publish tender on MahaTender portal" },
   { status: "tender published",               description: "Tender notice has been published on MahaTender and is open for contractor bids.",                                            handledBy: "Tender Clerk",                       nextStep: "Receive bids, evaluate technical bid, then financial bid" },
-  { status: "bids evaluated",                 description: "Technical and financial bids have been evaluated; L1 (lowest) bidder has been determined.",                                  handledBy: "Executive Engineer / Tender Clerk",  nextStep: "Issue LOA to L1 contractor" },
+  { status: "bids evaluated",                 description: "Technical and financial bids have been evaluated; L1 (lowest) bidder has been determined.",                                  handledBy: "Executive Engineer / Tender Clerk",  nextStep: "Issue LOI to L1 contractor" },
   { status: "loa issued",                     description: "Letter of Intent has been issued to the L1 contractor. Work Order to be issued next.",                                        handledBy: "Executive Engineer",                 nextStep: "EE issues Work Order to contractor" },
   { status: "work order issued",              description: "Work Order has been issued to the contractor with commencement and completion dates. Work can begin.",                        handledBy: "Contractor / Sectional Engineer",    nextStep: "Contractor executes work; SE creates MB on completion" },
   { status: "submitted to de",               description: "Measurement Book submitted by SE to the Deputy Engineer for 100% measurement verification.",                                  handledBy: "Deputy Engineer",                    nextStep: "DE verifies 100%; Contractor accepts MB" },
@@ -865,11 +865,11 @@ function handleTemplates(lower: string, firstName: string): string {
 // Static knowledge base — topic-gated
 const STATIC_KB: Array<{ module?: string; keywords: string[]; reply: string }> = [
   { module: "projects",   keywords: ["create project", "new project", "8-step", "project wizard"],           reply: "To create a new project, go to **All Projects** → **Create New Project** (SE role). The 8-step wizard covers: Basic Details → Sub Works → Lead Statement → Rate Analysis → Measurement Sheet → General Description → Documents → Review & Submit." },
-  { module: "projects",   keywords: ["project workflow", "project stage", "project flow", "forward project"], reply: "Project workflow: Draft → Pending at DE → Pending at EE → Cost Approved → DTP Sanctioned → Tender Published → LOA Issued → Work Order Issued → MB & Billing → Payment Processed." },
+  { module: "projects",   keywords: ["project workflow", "project stage", "project flow", "forward project"], reply: "Project workflow: Draft → Pending at DE → Pending at EE → Cost Approved → DTP Sanctioned → Tender Published → LOI Issued → Work Order Issued → MB & Billing → Payment Processed." },
   { module: "dtp",        keywords: ["how does dtp work", "dtp approval", "dtp chain", "dtp process"],        reply: "DTP (Draft Tender Paper) is prepared by the SE after **Cost Approved** status. Approval chain: SE → DE → EE → Additional CEO. After final approval, status becomes **DTP Sanctioned** and the Tender Clerk can publish the tender." },
   { module: "tender",     keywords: ["how does tender work", "tender process", "tender chain", "bid process"], reply: "Tender chain: Tender Clerk fills tender notice → EE approves → CAFO approves → Additional CEO → MahaTender Portal. Two bid stages follow: Technical Bid Evaluation, then Financial Bid Evaluation (L1 determination)." },
-  { module: "loa",        keywords: ["how is loa issued", "loa process", "loa approval"],                     reply: "LOA is approved by the Additional CEO and issued to the L1 contractor (lowest quoted percentage). The Executive Engineer then issues the Work Order." },
-  { module: "work-order", keywords: ["how is work order issued", "work order process"],                       reply: "Work Orders are issued by the Executive Engineer after LOA approval. Security Deposit and Performance Guarantee are each auto-calculated as 5% of the contract amount." },
+  { module: "loa",        keywords: ["how is loi issued", "loi process", "loi approval", "how is loa issued", "loa process", "loa approval"], reply: "LOI (Letter of Intent) is approved by the Additional CEO and issued to the L1 contractor (lowest quoted percentage). The Executive Engineer then issues the Work Order." },
+  { module: "work-order", keywords: ["how is work order issued", "work order process"],                       reply: "Work Orders are issued by the Executive Engineer after LOI approval. Security Deposit and Performance Guarantee are each auto-calculated as 5% of the contract amount." },
   { module: "mb",         keywords: ["how does mb work", "mb process", "mb chain", "mb billing process"],     reply: "MB & Billing chain: SE creates MB → DE verifies (100% check) → Contractor accepts → EE verifies (5% check) → Auditor applies deductions → Accountant → AAO → CAFO processes payment." },
   { module: "charges",    keywords: ["how do charges work", "how is gst applied", "what are active charges"], reply: "Active charges are automatically applied during Rate Analysis in project creation. Default: GST 18%, Labour Cess 1%, Insurance 0.5%, Quality Control 1% — all active. Contingency 2% is inactive." },
   { module: "rate-items", keywords: ["how to search rate", "how to lookup rate", "how to find ssr"],          reply: "Search rate items by asking: **'SSR001'** or **'show all DSR rates'** or **'rate items for 2024-2025'**. Items are stored in the Rate Item Editor." },
@@ -878,8 +878,8 @@ const STATIC_KB: Array<{ module?: string; keywords: string[]; reply: string }> =
   // Non-restricted (always allowed)
   { keywords: ["dark mode", "light mode", "theme toggle", "switch theme"],  reply: "Toggle light/dark mode using the Sun/Moon button in the header. Your preference is saved automatically." },
   { keywords: ["thank", "thanks", "great", "helpful", "good job"],          reply: "Happy to help! Let me know if there's anything else I can assist with." },
-  { keywords: ["what is iims", "about iims", "what does iims do"],          reply: "IIMS (Integrated Infrastructure Management System) is the Zilla Parishad platform for managing the full lifecycle of public works: project creation → cost estimation → DTP → tendering → LOA → work order → MB & billing → payment." },
-  { keywords: ["full project lifecycle", "entire workflow", "end-to-end workflow", "project life cycle", "project cycle"], reply: "Full IIMS project lifecycle:\n1. **SE** creates project estimate (Draft)\n2. **DE** reviews → **EE** approves (Cost Approved)\n3. **SE** prepares DTP → **DE** → **EE** → **Additional CEO** sanctions (DTP Sanctioned)\n4. **Tender Clerk** publishes tender → bids evaluated → L1 determined\n5. **EE** issues LOA and Work Order to L1 contractor\n6. **SE** creates Measurement Book → **DE** verifies → **Contractor** accepts → **EE** spot-checks\n7. **Auditor** scrutinises → **Accountant** → **AAO** → **CAFO** processes payment" },
+  { keywords: ["what is iims", "about iims", "what does iims do"],          reply: "IIMS (Integrated Infrastructure Management System) is the Zilla Parishad platform for managing the full lifecycle of public works: project creation → cost estimation → DTP → tendering → LOI → work order → MB & billing → payment." },
+  { keywords: ["full project lifecycle", "entire workflow", "end-to-end workflow", "project life cycle", "project cycle"], reply: "Full IIMS project lifecycle:\n1. **SE** creates project estimate (Draft)\n2. **DE** reviews → **EE** approves (Cost Approved)\n3. **SE** prepares DTP → **DE** → **EE** → **Additional CEO** sanctions (DTP Sanctioned)\n4. **Tender Clerk** publishes tender → bids evaluated → L1 determined\n5. **EE** issues LOI and Work Order to L1 contractor\n6. **SE** creates Measurement Book → **DE** verifies → **Contractor** accepts → **EE** spot-checks\n7. **Auditor** scrutinises → **Accountant** → **AAO** → **CAFO** processes payment" },
   { keywords: ["what is ssr", "what is dsr", "ssr vs dsr", "difference between ssr and dsr"], reply: "**SSR (Schedule of Standard Rates)** — Standard rates for common construction works as issued by the state government. Used for recurring work items.\n\n**DSR (Delhi Schedule of Rates / District Schedule of Rates)** — Rates specific to a district or type of work. Used when SSR rates are not available.\n\nBoth are available in the **Rate Item Editor**." },
   { keywords: ["what is dtp", "what is draft tender paper"],                  reply: "A **Draft Tender Paper (DTP)** is the detailed document prepared by the Sectional Engineer after the project cost is approved. It includes scope of work, technical specifications, terms and conditions, and schedule of quantities. It goes through SE → DE → EE → Additional CEO for approval before publishing the tender." },
   { keywords: ["what is loi", "what is letter of award"],                     reply: "An **LOI (Letter of Intent)** is the formal award issued to the L1 (lowest-quoted) contractor after financial bid evaluation. It is prepared by the Tender Clerk, approved by EE and Additional CEO, and authorises the contractor to commence work once the Work Order is issued." },
@@ -1103,12 +1103,12 @@ const PROJECT_FIELD_ALIASES: ProjectFieldAlias[] = [
     label: "Contract Amount",
     get: (p) => p.workOrderData?.contractAmount,
     fmt: (v) => fmt(toLakh(v as number)) },
-  { keys: ["loa amount", "loa approved amount", "letter of award amount", "award amount"],
-    label: "LOA Approved Amount",
+  { keys: ["loi amount", "loi approved amount", "loa amount", "loa approved amount", "letter of intent amount", "award amount"],
+    label: "LOI Approved Amount",
     get: (p) => p.tenderData?.loa?.approvedAmount,
     fmt: (v) => fmt(toLakh(v as number)) },
-  { keys: ["loa percentage", "loa approved percentage", "loa %", "award percentage"],
-    label: "LOA Approved Percentage",
+  { keys: ["loi percentage", "loi approved percentage", "loa percentage", "loa approved percentage", "loi %", "loa %", "award percentage"],
+    label: "LOI Approved Percentage",
     get: (p) => p.tenderData?.loa?.approvedPercentage,
     fmt: (v) => `${v}%` },
   { keys: ["net payable", "payable amount", "bill amount", "payment amount", "net payment"],
@@ -1176,8 +1176,8 @@ const PROJECT_FIELD_ALIASES: ProjectFieldAlias[] = [
             "aa order date", "aa sanctioned date"],
     label: "AA Date",
     get: (p) => p.dtpData?.aaDate },
-  { keys: ["loa issued date", "loa issue date", "loa date", "letter of award date"],
-    label: "LOA Issued Date",
+  { keys: ["loi issued date", "loi issue date", "loi date", "loa issued date", "loa issue date", "loa date", "letter of intent date"],
+    label: "LOI Issued Date",
     get: (p) => p.tenderData?.loa?.issuedDate },
   { keys: ["mb date", "measurement book date", "entry date", "mb entry date", "mb record date"],
     label: "Latest MB Entry Date",
@@ -1827,7 +1827,7 @@ function getContextualReply(input: string, user: User | null, notifications: INo
       }
       if (found.tenderData?.loa) {
         const loa = found.tenderData.loa;
-        reply += `\n• **LOA:** ${loa.l1Contractor} | ${fmt(toLakh(loa.approvedAmount))} | ${loa.status}`;
+        reply += `\n• **LOI:** ${loa.l1Contractor} | ${fmt(toLakh(loa.approvedAmount))} | ${loa.status}`;
       }
       if (found.tenderData && canAccess(role, "tender")) {
         reply += `\n• **Tender:** ${found.tenderData.tenderId} | ${found.tenderData.status}`;
@@ -1863,7 +1863,7 @@ function getContextualReply(input: string, user: User | null, notifications: INo
         const l1 = td.financialBid.l1Bidder;
         reply += `\n• L1 Bidder: **${l1.name}** @ ${l1.quotedPercentage ?? "—"}%`;
       }
-      if (td.loa) reply += `\n• LOA: Issued to **${td.loa.l1Contractor}** | ${fmt(toLakh(td.loa.approvedAmount))} | ${td.loa.status}`;
+      if (td.loa) reply += `\n• LOI: Issued to **${td.loa.l1Contractor}** | ${fmt(toLakh(td.loa.approvedAmount))} | ${td.loa.status}`;
       return reply;
     }
   }
@@ -2088,7 +2088,7 @@ function getRoleChips(role: string): string[] {
     case "Executive Engineer":
       return ["My pending actions", "MB approvals", "Tender actions", "Work orders"];
     case "Tender Clerk":
-      return ["Tender schedules", "Tender IDs", "Financial bid results", "LOA status"];
+      return ["Tender schedules", "Tender IDs", "Financial bid results", "LOI status"];
     case "Auditor":
       return ["MB audit queue", "My pending actions", "Show my projects"];
     case "Accountant":
@@ -2097,7 +2097,7 @@ function getRoleChips(role: string): string[] {
     case "Chief Accounts and Finance Officer":
       return ["Bills pending payment", "Budget overview", "My pending actions"];
     case "Additional Chief Executive Officer":
-      return ["My pending actions", "DTP approvals", "LOA approvals"];
+      return ["My pending actions", "DTP approvals", "LOI approvals"];
     case "Chief Executive Officer":
       return ["My pending actions", "Show all projects"];
     case "System Administrator":

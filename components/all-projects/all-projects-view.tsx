@@ -102,30 +102,42 @@ function hasPendingActionForRole(p: IProject, role: string): boolean {
   const s = p.status.toLowerCase();
   switch (role) {
     case "Sectional Engineer":
-      return s === "draft" || s.includes("returned");
+      // stage-1 (Draft), stage-4 (Ready for DTP Preparation), stage-23 (Work Order Issued → MB creation)
+      return s === "draft" || s === "ready for dtp preparation" || s === "work order issued" || s.includes("returned");
     case "Deputy Engineer":
-      return s.includes("submitted for verification") || s.includes("submitted to de");
+      // stage-2 (Pending Deputy Engineer Review), stage-5 (Pending DTP Review), stage-24 (Pending Measurement Verification)
+      return s === "pending deputy engineer review" || s === "pending dtp review" || s === "pending measurement verification";
     case "Executive Engineer":
-      return s.includes("submitted to ee") || s.includes("dtp submitted") || s.includes("awaiting ee");
+      // stage-3, stage-6, stage-7b, stage-9, stage-13, stage-17, stage-20 (all contain "ee review" or "executive engineer")
+      // stage-26: "Pending Measurement Approval"; stage-6: "Pending DTP Approval"
+      return s.includes("executive engineer") || s.includes("ee review") || s === "pending dtp approval" || s === "pending measurement approval";
     case "Tender Clerk":
+      // stage-7: "Ready for Tender Preparation", stage-15b: "Pending GB Approval",
+      // stage-16: "Financial Bid Approved" (LOI prep), stage-19b: "Work Order - TC Preparation"
       return (
-        s.includes("dtp sanctioned") ||
-        s.includes("tender published") ||
-        (!!p.tenderData?.technicalBid && !p.tenderData?.financialBid) ||
-        (p.tenderData?.financialBid?.status?.toLowerCase().includes("approved by additional ceo") && !p.tenderData?.loa) === true
+        s === "ready for tender preparation" ||
+        s === "pending gb approval" ||
+        s === "financial bid approved" ||
+        s === "work order - tc preparation"
       );
     case "Chief Accounts and Finance Officer":
-      return s.includes("pending cafo") || s.includes("submitted to cafo") || s.includes("awaiting cafo");
+      // stage-7c, stage-10, stage-14, stage-18, stage-21 (all contain "cafo"); stage-30: "Pending Bill Approval"
+      return s.includes("cafo") || s === "pending bill approval";
     case "Additional Chief Executive Officer":
-      return s.includes("submitted to aceo") || s.includes("approved by cafo") || s.includes("awaiting aceo");
+      // stage-7d, stage-11, stage-15, stage-19, stage-22, stage-31 (all contain "aceo")
+      return s.includes("aceo");
     case "Chief Executive Officer":
-      return s.includes("submitted to ceo") || s.includes("approved by aceo") || s.includes("awaiting ceo");
+      // stage-32: "Pending CEO Final Approval"
+      return s === "pending ceo final approval";
     case "Auditor":
-      return s.includes("pending auditor") || s.includes("forwarded to auditor");
+      // stage-27: "Pending Auditor Review"
+      return s === "pending auditor review";
     case "Accountant":
-      return s.includes("pending accountant") || s.includes("forwarded to accountant");
+      // stage-28: "Ready for Billing"
+      return s === "ready for billing";
     case "Assistant Accounts Officer":
-      return s.includes("pending aao") || s.includes("forwarded to aao");
+      // stage-29: "Pending Bill Verification"
+      return s === "pending bill verification";
     default:
       return false;
   }
@@ -141,7 +153,8 @@ interface RoleAction {
 }
 
 function getTenderClerkAction(p: IProject): RoleAction | null {
-  if (p.status === "DTP Sanctioned" && !p.tenderData) {
+  // stage-7: TC prepares tender notice
+  if (p.status === "Ready for Tender Preparation") {
     return {
       label: "Prepare Tender",
       colorCls: "bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800",
@@ -149,31 +162,31 @@ function getTenderClerkAction(p: IProject): RoleAction | null {
       href: `/create-tender/${p.id}`,
     };
   }
-  if (p.status === "Tender Published" && !p.tenderData?.technicalBid) {
+  // stage-15b: TC records GB Approval outcome
+  if (p.status === "Pending GB Approval") {
     return {
-      label: "Technical Bid",
+      label: "Record GB Approval",
       colorCls: "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
       icon: FileCheck,
-      href: `/technical-bid/${p.id}`,
+      href: `/gb-approval/${p.id}`,
     };
   }
-  if (p.tenderData?.technicalBid && !p.tenderData?.financialBid) {
+  // stage-16: TC prepares Letter of Intent
+  if (p.status === "Financial Bid Approved" && !p.tenderData?.loa) {
     return {
-      label: "Financial Bid",
-      colorCls: "bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
-      icon: IndianRupee,
-      href: `/financial-bid/${p.id}`,
-    };
-  }
-  if (
-    p.tenderData?.financialBid?.status === "Approved by Additional CEO" &&
-    !p.tenderData?.loa
-  ) {
-    return {
-      label: "Create LOA",
+      label: "Issue Letter of Intent",
       colorCls: "bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800",
       icon: FileCheck,
       href: `/letter-of-award/${p.id}`,
+    };
+  }
+  // stage-19b: TC prepares Work Order
+  if (p.status === "Work Order - TC Preparation") {
+    return {
+      label: "Prepare Work Order",
+      colorCls: "bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800",
+      icon: IndianRupee,
+      href: `/work-order/${p.id}`,
     };
   }
   return null;

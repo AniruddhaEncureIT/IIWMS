@@ -8,7 +8,7 @@ import {
 import { store } from "@/store/iims.store";
 import {
   StatCard, QuickAction, ProjectCard, ActivityTimeline,
-  SectionCard, formatCr, totalBudget,
+  SectionCard, formatCr, totalBudget, getPendingForRole,
 } from "./dash-shared";
 import type { IProjectHistory } from "@/types/iims.types";
 
@@ -16,7 +16,7 @@ export function SEDashboard({ name }: { name: string }) {
   const projects = store.getAllProjects().filter((p) => p.status !== "Draft" || p.draftData);
   const allProjects = store.getAllProjects();
 
-  const pending  = allProjects.filter((p) => p.status.toLowerCase().includes("pending")).length;
+  const pending  = getPendingForRole(allProjects, "Sectional Engineer").length;
   const approved = allProjects.filter((p) => {
     const s = p.status.toLowerCase();
     return s.includes("approved") || s.includes("sanctioned") || s.includes("cost approved");
@@ -53,7 +53,7 @@ export function SEDashboard({ name }: { name: string }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock}        color="yellow" label="Pending Reviews"   value={pending}         trend="Awaiting action" />
+        <StatCard icon={Clock}        color="yellow" label="Pending Actions"    value={pending}         trend="Awaiting your action" />
         <StatCard icon={CheckCircle2} color="green"  label="Approved Projects" value={approved}        trend="Sanctioned/Approved" />
         <StatCard icon={TrendingUp}   color="blue"   label="Total Budget"      value={formatCr(budget)} trend="Across all projects" />
         <StatCard icon={Activity}     color="purple" label="Active Projects"   value={active}          trend="Non-draft projects" />

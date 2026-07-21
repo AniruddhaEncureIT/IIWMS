@@ -9,6 +9,23 @@ export interface IUser {
   division?: string;
   subDivision?: string;
   lastLogin?: string;
+  // Extended profile fields
+  userType?: "Employee" | "Contractor";
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  mobile?: string;
+  address?: string;
+  departments?: string[];
+  designations?: string[];
+  divisions?: string[];
+  subDivisions?: string[];
+  taluka?: string;
+  gramPanchayat?: string;
+  signatureUrl?: string;
+  panNo?: string;
+  firm?: string;
+  firmAddress?: string;
 }
 
 // ── Document ───────────────────────────────────────────────────────────────
@@ -131,6 +148,17 @@ export interface IFinancialBidData {
   approvedBy?: string;
 }
 
+export interface IGBApprovalData {
+  l1Contractor: string;
+  aboveBelowPercentage: number;
+  percentageType: "Above" | "Below" | "Equal";
+  gbResolutionDoc?: IDocument;
+  approvalLetterDoc?: IDocument;
+  remarks?: string;
+  submittedBy?: string;
+  submittedAt?: string;
+}
+
 export interface ILOAData {
   l1Contractor: string;
   approvedPercentage: number;
@@ -139,6 +167,14 @@ export interface ILOAData {
   documents: IDocument[];
   status: string;
   issuedDate?: string;
+  approvedBy?: string;
+}
+
+export interface ITenderGeneratedDocuments {
+  tenderNotice?: IDocument;
+  scheduleB?: IDocument;
+  technicalSanction?: IDocument;
+  abstract?: IDocument;
 }
 
 export interface ITenderData {
@@ -161,8 +197,10 @@ export interface ITenderData {
   cafoApprovedBy?: string;
   additionalCeoApprovedBy?: string;
   mahaTenderReferenceId?: string;
+  generatedDocuments?: ITenderGeneratedDocuments;
   technicalBid?: ITechnicalBidData;
   financialBid?: IFinancialBidData;
+  gbApproval?: IGBApprovalData;
   loa?: ILOAData;
 }
 
@@ -243,6 +281,21 @@ export interface IMBData {
   eeVerifiedBy?: string;
   eeVerifiedAt?: string;
   contractorAcceptedAt?: string;
+  auditorVerifiedBy?: string;
+  auditorVerifiedAt?: string;
+  accountantVerifiedBy?: string;
+  accountantVerifiedAt?: string;
+  aaoVerifiedBy?: string;
+  aaoVerifiedAt?: string;
+  cafoVerifiedBy?: string;
+  cafoVerifiedAt?: string;
+  aceoVerifiedBy?: string;
+  aceoVerifiedAt?: string;
+  ceoApprovedBy?: string;
+  ceoApprovedAt?: string;
+  billPaidAt?: string;
+  budgetHead?: string;
+  locked?: boolean;
 }
 
 // ── History ─────────────────────────────────────────────────────────────────
@@ -275,10 +328,13 @@ export interface IProject {
   gramPanchayat: string;
   workDemandBy?: string;
   workDemandByDocument?: IDocument;
+  workDescription?: string;
   status: string;
   currentStage: string;
   createdBy: string;
   createdAt: string;
+  completedAt?: string;
+  completionPercentage?: number;
   subWorks?: ISubWork[];
   leadStatements?: ILeadStatement[];
   rateAnalysis?: IRateAnalysis[];
@@ -330,6 +386,78 @@ export interface ITemplate {
   name: string;
   content: string;
   type: string;
+}
+
+// ── Contractor ──────────────────────────────────────────────────────────────
+
+export type RegistrationStatus =
+  | "Not Registered"
+  | "Active"
+  | "Expired"
+  | "Renewal Due"
+  | "Suspended";
+
+export interface IContractorHistoryEntry {
+  id:          string;
+  date:        string;
+  action:      string;
+  performedBy: string;
+}
+
+export interface IContractorRegistration {
+  // ── Core (kept for backwards compatibility)
+  registrationNumber: string;
+  registrationClass: "Class A" | "Class B" | "Class C" | "Class D";
+  validUpto: string;
+  panNumber?: string;
+  gstNumber?: string;
+  address?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+
+  // ── Registration Information
+  registerSrNo?: string;
+  registrationClassSrNo?: string;
+  workCapacity?: string;
+  educationalQualification?: string;
+  guidelineBooklet?: string;
+
+  // ── Payment Information
+  receiptOrDDNo?: string;
+  receiptOrDDDate?: string;
+  registrationFee?: string;
+  certificateAmount?: string;
+
+  // ── Validity Information
+  registrationDate?: string;
+  validityYears?: string;
+  registrationPeriodFrom?: string;
+  registrationPeriodTo?: string;
+
+  // ── File Information
+  fileYearNo?: string;
+  fileNoteNo?: string;
+  filePageNo?: string;
+  bundleNo?: string;
+}
+
+export interface IContractor {
+  id: string;
+  name: string;       // Full contact person name (firstName + middleName + lastName)
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  firmName: string;
+  email: string;
+  mobile: string;
+  status: "Active" | "Inactive";
+  createdAt: string;
+  registration?: IContractorRegistration;
+  // ── Extended
+  userId?: string;
+  regStatus?: RegistrationStatus;
+  history?: IContractorHistoryEntry[];
 }
 
 // ── Admin entities ──────────────────────────────────────────────────────────

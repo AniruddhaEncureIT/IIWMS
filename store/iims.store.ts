@@ -5,8 +5,10 @@ import type {
   ICharge,
   IRateItem,
   ITemplate,
+  IContractor,
 } from "@/types/iims.types";
 import { SEED_USERS } from "@/mock-data/users.mock";
+import { SEED_CONTRACTORS } from "@/mock-data/contractors.mock";
 import { SEED_CHARGES } from "@/mock-data/charges.mock";
 import { SEED_PROJECTS } from "@/mock-data/projects.mock";
 import { SEED_RATE_ITEMS } from "@/mock-data/rate-items.mock";
@@ -26,11 +28,12 @@ const KEYS = {
   CURRENT_USER: "iims-current-user",
   RATE_ITEMS: "iims-rate-items",
   TEMPLATES: "iims-templates",
+  CONTRACTORS: "iims-contractors",
 } as const;
 
 // Bump this string whenever seed data files change (users, projects, charges, rate items, templates).
 // A version match means localStorage already has current seed data — skip all writes.
-const SEED_VERSION = "2026-06-22-v1";
+const SEED_VERSION = "2026-06-25-v2";
 const SEED_VERSION_KEY = "iims-seed-version";
 
 class Store {
@@ -42,24 +45,38 @@ class Store {
     if (this.seeded || typeof window === "undefined") return;
     this.seeded = true;
 
-    // Already seeded at this version — skip all writes to avoid blocking the main thread
-    if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION) return;
+    // Already seeded at this version AND all required collections exist — skip writes
+    const requiredKeys = [KEYS.PROJECTS, KEYS.USERS, KEYS.RATE_ITEMS, KEYS.TEMPLATES, KEYS.CHARGES, KEYS.CONTRACTORS];
+    const allPresent = requiredKeys.every((k) => localStorage.getItem(k) !== null);
+    if (localStorage.getItem(SEED_VERSION_KEY) === SEED_VERSION && allPresent) return;
 
-    if (!this.read<IUser[]>(KEYS.USERS)) {
-      // Strip passwords — auth is handled by auth.service; passwords must not persist to localStorage
-      this.write(KEYS.USERS, SEED_USERS.map(({ password: _pw, ...u }) => ({ ...u, password: "" })));
-    }
+    // Always merge seed users so stale or updated seed data is applied.
+    // User-created accounts (IDs not in the seed set) are preserved as-is.
+    const seedUserIds = new Set(SEED_USERS.map((u) => u.id));
+    const storedUsers = this.read<IUser[]>(KEYS.USERS) ?? [];
+    const customUsers = storedUsers.filter((u) => !seedUserIds.has(u.id));
+    this.write(KEYS.USERS, [
+      ...SEED_USERS.map(({ password: _pw, ...u }) => ({ ...u, password: "" })),
+      ...customUsers,
+    ]);
 
     // Merge seed projects so new fields added to SEED_PROJECTS are applied.
     // User-created projects (IDs not in the seed set) are preserved as-is.
-    const seedIds = new Set(SEED_PROJECTS.map((p) => p.id));
-    const stored = this.read<IProject[]>(KEYS.PROJECTS) ?? [];
-    const userCreated = stored.filter((p) => !seedIds.has(p.id));
-    this.write(KEYS.PROJECTS, [...SEED_PROJECTS, ...userCreated]);
+    const seedProjectIds = new Set(SEED_PROJECTS.map((p) => p.id));
+    const storedProjects = this.read<IProject[]>(KEYS.PROJECTS) ?? [];
+    const customProjects = storedProjects.filter((p) => !seedProjectIds.has(p.id));
+    this.write(KEYS.PROJECTS, [...SEED_PROJECTS, ...customProjects]);
 
     if (!this.read<ICharge[]>(KEYS.CHARGES)) this.write(KEYS.CHARGES, SEED_CHARGES);
     if (!this.read<IRateItem[]>(KEYS.RATE_ITEMS)) this.write(KEYS.RATE_ITEMS, SEED_RATE_ITEMS);
     if (!this.read<ITemplate[]>(KEYS.TEMPLATES)) this.write(KEYS.TEMPLATES, SEED_TEMPLATES);
+
+    // Always merge seed contractors so stale or updated seed data is applied.
+    // User-created contractor records (IDs not in the seed set) are preserved as-is.
+    const seedContractorIds = new Set(SEED_CONTRACTORS.map((c) => c.id));
+    const storedContractors = this.read<IContractor[]>(KEYS.CONTRACTORS) ?? [];
+    const customContractors = storedContractors.filter((c) => !seedContractorIds.has(c.id));
+    this.write(KEYS.CONTRACTORS, [...SEED_CONTRACTORS, ...customContractors]);
 
     localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
   }
@@ -338,7 +355,7 @@ class Store {
     const validation = validateForward(user.role, p.status, "Deputy Engineer");
     if (!validation.ok) return validation;
 
-    const newStatus = "Pending at Deputy Engineer";
+    const newStatus = "Pending Deputy Engineer Review";
     this.addHistory(id, {
       action: "Draft Submitted for Verification",
       performedBy: user.name,
@@ -365,11 +382,21 @@ class Store {
     return this.getAllUsers().find((u) => u.id === id) ?? null;
   }
 
+  private generateUserId(): string {
+    const users = this.getAllUsers();
+    const year = new Date().getFullYear();
+    const prefix = `USR-${year}-`;
+    const existing = new Set(users.map((u) => u.id));
+    let n = 1;
+    while (existing.has(`${prefix}${String(n).padStart(4, "0")}`)) n++;
+    return `${prefix}${String(n).padStart(4, "0")}`;
+  }
+
   createUser(data: Partial<IUser>): IUser {
     const users = this.getAllUsers();
     const { password: _pw, ...safeData } = data;
     const user: IUser = {
-      id: `USR${Date.now()}`,
+      id: this.generateUserId(),
       email: "",
       password: "",  // never stored
       role: "",
@@ -509,12 +536,44 @@ class Store {
     );
   }
 
+  // ── Contractors ───────────────────────────────────────────────────────────
+
+  getAllContractors(): IContractor[] {
+    this.ensureSeeded();
+    return this.read<IContractor[]>(KEYS.CONTRACTORS) ?? [];
+  }
+
+  getContractorById(id: string): IContractor | null {
+    return this.getAllContractors().find((c) => c.id === id) ?? null;
+  }
+
+  createContractor(data: Omit<IContractor, "id" | "createdAt">): IContractor {
+    const all = this.getAllContractors();
+    const year = new Date().getFullYear();
+    const seq  = (all.length + 1).toString().padStart(4, "0");
+    const id   = `CNT-${year}-${seq}`;
+    const contractor: IContractor = {
+      id,
+      createdAt: new Date().toISOString().split("T")[0],
+      ...data,
+    };
+    this.write(KEYS.CONTRACTORS, [...all, contractor]);
+    return contractor;
+  }
+
+  updateContractor(id: string, data: Partial<IContractor>): void {
+    const all = this.getAllContractors().map((c) =>
+      c.id === id ? { ...c, ...data } : c
+    );
+    this.write(KEYS.CONTRACTORS, all);
+  }
+
   // ── Utilities ─────────────────────────────────────────────────────────────
 
   /** Wipe all IIMS data and re-seed from scratch (useful for dev reset) */
   resetToSeedData(): void {
     if (typeof window === "undefined") return;
-    Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
+    [...Object.values(KEYS)].forEach((k) => localStorage.removeItem(k));
     localStorage.removeItem(SEED_VERSION_KEY);
     this.seeded = false;
     this.ensureSeeded();

@@ -8,14 +8,15 @@ import {
 import { store } from "@/store/iims.store";
 import {
   StatCard, QuickAction, ProjectCard, ActivityTimeline,
-  SectionCard, formatCr, totalBudget,
+  SectionCard, formatCr, totalBudget, getPendingForRole,
 } from "./dash-shared";
 import type { IProjectHistory } from "@/types/iims.types";
 
 export function DEDashboard({ name }: { name: string }) {
   const allProjects = store.getAllProjects();
 
-  const pendingDE  = allProjects.filter((p) => p.status.toLowerCase().includes("deputy engineer")).length;
+  const pendingProjects = getPendingForRole(allProjects, "Deputy Engineer");
+  const pendingDE  = pendingProjects.length;
   const approved   = allProjects.filter((p) => {
     const s = p.status.toLowerCase();
     return s.includes("approved") || s.includes("sanctioned");
@@ -23,8 +24,7 @@ export function DEDashboard({ name }: { name: string }) {
   const budget     = totalBudget(allProjects);
   const active     = allProjects.filter((p) => p.status !== "Draft" && !p.status.toLowerCase().includes("payment")).length;
 
-  const recent = allProjects
-    .filter((p) => p.status.toLowerCase().includes("deputy engineer"))
+  const recent = [...pendingProjects]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
 
@@ -48,7 +48,7 @@ export function DEDashboard({ name }: { name: string }) {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock}        color="yellow" label="Pending Verification" value={pendingDE} trend="Awaiting DE review" />
+        <StatCard icon={Clock}        color="yellow" label="Pending Actions"       value={pendingDE} trend="Awaiting your review" />
         <StatCard icon={CheckCircle2} color="green"  label="Approved Projects"   value={approved}  trend="Sanctioned/Approved" />
         <StatCard icon={TrendingUp}   color="blue"   label="Total Budget"        value={formatCr(budget)} trend="All projects" />
         <StatCard icon={Activity}     color="purple" label="Active Projects"     value={active}    trend="In progress" />
@@ -61,12 +61,12 @@ export function DEDashboard({ name }: { name: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <SectionCard
-            title="Pending Verification"
+            title="Pending Actions"
             action={<Link href="/all-projects" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>}
           >
             {recent.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                No projects pending DE verification
+                No pending projects
               </p>
             ) : (
               <div className="space-y-3">

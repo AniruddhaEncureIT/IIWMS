@@ -8,7 +8,7 @@ import {
 import { store } from "@/store/iims.store";
 import {
   StatCard, QuickAction, ProjectCard, ActivityTimeline,
-  SectionCard, formatCr, totalBudget,
+  SectionCard, formatCr, totalBudget, getPendingForRole,
 } from "./dash-shared";
 import type { IProjectHistory } from "@/types/iims.types";
 
@@ -16,47 +16,19 @@ import type { IProjectHistory } from "@/types/iims.types";
 
 interface GenericConfig {
   subtitle: string;
-  pendingLabel: string;
-  pendingFilter: (status: string) => boolean;
 }
 
 const CONFIG: Record<string, GenericConfig> = {
-  "Auditor": {
-    subtitle: "Audit and verify measurement books",
-    pendingLabel: "MB Pending Audit",
-    pendingFilter: (s) => s.toLowerCase().includes("auditor"),
-  },
-  "Accountant": {
-    subtitle: "Process and track project bills",
-    pendingLabel: "Pending Processing",
-    pendingFilter: (s) => s.toLowerCase().includes("accountant"),
-  },
-  "Assistant Accounts Officer": {
-    subtitle: "Review accounts and forward for approval",
-    pendingLabel: "Pending AAO Review",
-    pendingFilter: (s) => s.toLowerCase().includes("aao") || s.toLowerCase().includes("assistant accounts"),
-  },
-  "Chief Accounts and Finance Officer": {
-    subtitle: "Approve payments and financial matters",
-    pendingLabel: "Pending CAFO Approval",
-    pendingFilter: (s) => s.toLowerCase().includes("cafo") || s.toLowerCase().includes("chief accounts"),
-  },
-  "Additional Chief Executive Officer": {
-    subtitle: "Sanction and approve project proposals",
-    pendingLabel: "Pending ACEO Approval",
-    pendingFilter: (s) => s.toLowerCase().includes("additional") || s.toLowerCase().includes("addl"),
-  },
-  "Chief Executive Officer": {
-    subtitle: "Final approval authority for all projects",
-    pendingLabel: "Pending CEO Approval",
-    pendingFilter: (s) => s.toLowerCase().includes("ceo") || s.toLowerCase().includes("chief executive"),
-  },
+  "Auditor":                          { subtitle: "Audit and verify measurement books" },
+  "Accountant":                       { subtitle: "Process and track project bills" },
+  "Assistant Accounts Officer":       { subtitle: "Review accounts and forward for approval" },
+  "Chief Accounts and Finance Officer": { subtitle: "Approve payments and financial matters" },
+  "Additional Chief Executive Officer": { subtitle: "Sanction and approve project proposals" },
+  "Chief Executive Officer":          { subtitle: "Final approval authority for all projects" },
 };
 
 const DEFAULT_CONFIG: GenericConfig = {
   subtitle: "Manage and review project activities",
-  pendingLabel: "Pending Action",
-  pendingFilter: (s) => s.toLowerCase().includes("pending"),
 };
 
 export function GenericFinanceDashboard({
@@ -69,13 +41,8 @@ export function GenericFinanceDashboard({
   const cfg = CONFIG[role] ?? DEFAULT_CONFIG;
   const allProjects = store.getAllProjects();
 
-  // Role-specific pending count — check project mbData statuses too
-  let pendingCount = 0;
-  for (const p of allProjects) {
-    const inProjectStatus = cfg.pendingFilter(p.status);
-    const inMBStatus = (p.mbData ?? []).some((mb) => cfg.pendingFilter(mb.status));
-    if (inProjectStatus || inMBStatus) pendingCount++;
-  }
+  const pendingProjects = getPendingForRole(allProjects, role);
+  const pendingCount = pendingProjects.length;
 
   const approved = allProjects.filter((p) => {
     const s = p.status.toLowerCase();
@@ -87,17 +54,10 @@ export function GenericFinanceDashboard({
     (p) => p.status !== "Draft" && !p.status.toLowerCase().includes("payment")
   ).length;
 
-  // Show projects relevant to this role
-  const recent = allProjects
-    .filter((p) => {
-      const inStatus = cfg.pendingFilter(p.status);
-      const inMB = (p.mbData ?? []).some((mb) => cfg.pendingFilter(mb.status));
-      return inStatus || inMB;
-    })
+  const recent = [...pendingProjects]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
 
-  // Fallback: show all recently active projects if nothing role-specific
   const displayProjects =
     recent.length > 0
       ? recent
@@ -124,7 +84,7 @@ export function GenericFinanceDashboard({
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock}        color="yellow" label={cfg.pendingLabel}  value={pendingCount} trend="Awaiting your action" />
+        <StatCard icon={Clock}        color="yellow" label="Pending Actions"   value={pendingCount} trend="Awaiting your action" />
         <StatCard icon={CheckCircle2} color="green"  label="Approved / Paid"  value={approved}     trend="Completed" />
         <StatCard icon={TrendingUp}   color="blue"   label="Total Budget"     value={formatCr(budget)} trend="All projects" />
         <StatCard icon={Activity}     color="purple" label="Active Projects"  value={active}       trend="In progress" />

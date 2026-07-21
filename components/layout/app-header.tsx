@@ -24,12 +24,18 @@ import {
   ArrowRight,
   Command,
   MoreVertical,
+  KeyRound,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useNotifications, type INotification } from "@/hooks/use-notifications";
 import { ChatTrigger } from "./floating-chat";
 import { loadLogo } from "@/lib/logo-storage";
+import { validateContact } from "@/lib/validators";
 
 const LANGUAGES = [
   { code: "en", label: "EN", full: "English" },
@@ -70,15 +76,145 @@ function formatRelativeTime(ts: string): string {
   }
 }
 
+const DEMO_OTP = "1234";
+
+function ResetPasswordModal({ onClose }: { onClose: () => void }) {
+  const [step,    setStep]    = useState<"contact" | "otp" | "newpwd">("contact");
+  const [contact, setContact] = useState("");
+  const [otp,     setOtp]     = useState("");
+  const [pwd,     setPwd]     = useState("");
+  const [pwd2,    setPwd2]    = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [busy,    setBusy]    = useState(false);
+
+  function sendOtp() {
+    const err = validateContact(contact);
+    if (err) { toast.error(err); return; }
+    const isEmail = contact.trim().includes("@");
+    setBusy(true);
+    setTimeout(() => {
+      setBusy(false);
+      setStep("otp");
+      toast.info(isEmail
+        ? "OTP sent to your registered email address. (Demo OTP: 1234)"
+        : "OTP sent to your registered mobile number. (Demo OTP: 1234)"
+      );
+    }, 600);
+  }
+
+  function verifyOtp() {
+    if (otp.trim() !== DEMO_OTP) { toast.error("Incorrect OTP. (Demo OTP: 1234)"); return; }
+    setStep("newpwd");
+  }
+
+  function savePassword() {
+    if (!pwd.trim() || pwd.length < 6) { toast.error("Password must be at least 6 characters."); return; }
+    if (pwd !== pwd2)                  { toast.error("Passwords do not match."); return; }
+    setBusy(true);
+    setTimeout(() => { setBusy(false); toast.success("Password changed successfully."); onClose(); }, 800);
+  }
+
+  const stepLabel =
+    step === "contact" ? "Verify your registered contact" :
+    step === "otp"     ? "Enter OTP sent to your contact" :
+                         "Set your new password";
+
+  const inputCls = "w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-colors";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 px-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+            <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Reset Password</h3>
+            <p className="text-xs text-gray-400">{stepLabel}</p>
+          </div>
+        </div>
+
+        {step === "contact" && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                Email or Mobile Number <span className="text-red-500">*</span>
+              </label>
+              <input type="text" value={contact}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setContact(/^\d+$/.test(v) ? v.replace(/\D/g, "").slice(0, 10) : v);
+                }}
+                placeholder="Email or 10-digit mobile" autoFocus className={inputCls}
+                onKeyDown={(e) => { if (e.key === "Enter") sendOtp(); }} />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+              <button onClick={sendOtp} disabled={busy} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-60">
+                {busy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} Send OTP
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === "otp" && (
+          <div className="space-y-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              OTP sent to <strong className="text-gray-700 dark:text-gray-200">{contact}</strong>
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Enter OTP <span className="text-red-500">*</span></label>
+              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="4-digit OTP" maxLength={4} autoFocus
+                className={`${inputCls} tracking-widest font-mono text-center text-xl`} />
+              <p className="text-[11px] text-gray-400 mt-1.5 text-center">Demo OTP: <strong className="text-gray-600 dark:text-gray-300">1234</strong></p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setStep("contact"); setOtp(""); }} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Back</button>
+              <button onClick={verifyOtp} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
+                <ShieldCheck className="w-4 h-4" /> Verify
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === "newpwd" && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">New Password <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input type={showPwd ? "text" : "password"} value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Minimum 6 characters" autoFocus className={`${inputCls} pr-10`} />
+                <button type="button" onClick={() => setShowPwd((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" tabIndex={-1}>
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Confirm Password <span className="text-red-500">*</span></label>
+              <input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} placeholder="Re-enter new password" className={inputCls} />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} disabled={busy} className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-60">Cancel</button>
+              <button onClick={savePassword} disabled={busy} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:opacity-60">
+                {busy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />} Save
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = false }: AppHeaderProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
 
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [userOpen,  setUserOpen]  = useState(false);
-  const [langOpen,  setLangOpen]  = useState(false);
-  const [moreOpen,  setMoreOpen]  = useState(false);
+  const [notifOpen,     setNotifOpen]     = useState(false);
+  const [userOpen,      setUserOpen]      = useState(false);
+  const [langOpen,      setLangOpen]      = useState(false);
+  const [moreOpen,      setMoreOpen]      = useState(false);
+  const [resetPwdOpen,  setResetPwdOpen]  = useState(false);
   const [lang, setLang]           = useState<Language>(LANGUAGES[0]);
   const [search, setSearch]       = useState("");
   const [mounted,      setMounted]      = useState(false);
@@ -161,6 +297,8 @@ export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = fal
   }, [router]);
 
   return (
+    <>
+    {resetPwdOpen && <ResetPasswordModal onClose={() => setResetPwdOpen(false)} />}
     <header
       role="banner"
       className="h-14 fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 lg:px-5"
@@ -602,7 +740,16 @@ export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = fal
               </div>
 
               {/* Actions */}
-              <div className="px-2 py-2">
+              <div className="px-2 py-2 space-y-0.5">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setUserOpen(false); setResetPwdOpen(true); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <KeyRound className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                  Reset Password
+                </button>
                 <button
                   type="button"
                   role="menuitem"
@@ -618,5 +765,6 @@ export function AppHeader({ onMenuOpen, onChatOpen, chatOpen, isProcessing = fal
         </div>
       </div>
     </header>
+    </>
   );
 }

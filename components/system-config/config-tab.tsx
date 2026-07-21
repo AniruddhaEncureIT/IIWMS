@@ -55,9 +55,9 @@ const WORKFLOWS: WorkflowDef[] = [
     ],
   },
   {
-    id: "wf-loa", name: "LOA Issuance",
+    id: "wf-loa", name: "LOI Issuance",
     steps: [
-      { order: 1, role: "Executive Engineer",  action: "Issue LOA",          canDelegate: false },
+      { order: 1, role: "Executive Engineer",  action: "Issue LOI",          canDelegate: false },
     ],
   },
   {
